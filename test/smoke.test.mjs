@@ -103,6 +103,20 @@ test('type submits a form and verifies the resulting text', async () => {
   assert.equal(r.verify.expectTextFound, true);
 });
 
+test('press verifies post-conditions after keyboard actions', async () => {
+  const html = `
+    <form onsubmit="event.preventDefault(); document.querySelector('#out').textContent = 'Pressed: ' + document.querySelector('#q').value;">
+      <label>Query <input id="q" name="q"></label>
+    </form>
+    <p id="out"></p>
+  `;
+  await bp('goto', { url: `data:text/html,${encodeURIComponent(html)}` });
+  await bp('type', { selector: '#q', text: 'kestrel' });
+  const r = await bp('press', { keys: 'Enter', expectText: 'Pressed: kestrel' });
+  assert.equal(r.ok, true);
+  assert.equal(r.verify.expectTextFound, true);
+});
+
 test('fill_form fails when its expected post-condition is missing', async () => {
   const html = `
     <label>First <input id="first"></label>

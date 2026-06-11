@@ -290,7 +290,7 @@ node kestrel.js bench
 | `goto url=.. [expectText=..]` | navigate + verify |
 | `click ref=eN\|som=N\|selector=..\|text=.. [key=..] [expectText=..] [expectGone=..] [expectUrl=..]` | click + verify + self-heal |
 | `type ref=eN text=".." [key=..] [submit=true] [expectText=..]` | clear + type |
-| `select` · `press keys=".."` · `scroll [direction=\|to_text=]` · `wait_for [..]` | interaction |
+| `select` · `press keys=".." [expectText=..]` · `scroll [direction=\|to_text=]` · `wait_for [..]` | interaction |
 | `upload_file ref=\|selector= path=a,b` · `handle_dialog accept=true` · `dismiss_overlays` · `downloads` | hard cases |
 | `extract [query=..]` · `screenshot [path=] [fullPage=true]` | read page |
 | `tabs` · `switch_tab index=N` · `new_tab url=..` · `close_tab` · `back` · `forward` | tabs / history |

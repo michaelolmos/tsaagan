@@ -774,8 +774,8 @@ const actions = {
     return actWithHeal(args, (loc) => loc.selectOption(args.value, { timeout: 8000 }), args);
   },
 
-  async press({ keys }) {
-    return withVerify(() => state.page.keyboard.press(keys), {});
+  async press(args) {
+    return withVerify(() => state.page.keyboard.press(args.keys), args);
   },
 
   async upload_file(args) {
