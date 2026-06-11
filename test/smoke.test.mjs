@@ -123,6 +123,21 @@ test('fill_form fails when its expected post-condition is missing', async () => 
   assert.equal(r.fields.every((field) => field.ok), true);
 });
 
+test('fill_form reports a top-level error when a field fails', async () => {
+  const html = '<label>First <input id="first"></label>';
+  await bp('goto', { url: `data:text/html,${encodeURIComponent(html)}` });
+  const r = await bp('fill_form', {
+    fields: [
+      { selector: '#first', text: 'Ada' },
+      { selector: '#missing', text: 'Lovelace' },
+    ],
+  });
+  assert.equal(r.ok, false);
+  assert.match(r.error, /field failed/i);
+  assert.equal(r.fields[0].ok, true);
+  assert.equal(r.fields[1].ok, false);
+});
+
 test("snapshot flags verify-you're-human walls for handoff", async () => {
   const html = '<main><h1>Please verify you\'re human to continue</h1></main>';
   await bp('goto', { url: `data:text/html,${encodeURIComponent(html)}` });

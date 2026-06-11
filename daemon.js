@@ -765,7 +765,9 @@ const actions = {
     }
     const v = await withVerify(() => Promise.resolve(), { expectText });
     const ok = results.every((r) => r.ok) && v.ok !== false;
-    return { ok, ...(v.error ? { error: v.error } : {}), fields: results, verify: v.verify };
+    const failedFields = results.filter((r) => !r.ok);
+    const error = v.error || (failedFields.length ? `${failedFields.length} field failed` : undefined);
+    return { ok, ...(error ? { error } : {}), fields: results, verify: v.verify };
   },
 
   async select(args) {
