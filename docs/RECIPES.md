@@ -122,3 +122,18 @@ kestrel click ref=e3 expectText="Saved"    # action self-verifies
 kestrel assert text="Saved" url="/success" # explicit pass/fail check
 kestrel console_log                        # recent console errors (debugging)
 ```
+
+## Record, replay, and audit a verified workflow
+
+```bash
+kestrel record_start name=weekly-report
+kestrel goto url=https://example.com expectText="Example"
+kestrel click ref=e6 expectText="IANA"
+kestrel record_stop                         # returns { path, steps }
+kestrel replay path=/Users/me/.kestrel/records/...
+kestrel report format=md                    # returns { path, summary }
+```
+
+Only successful actions with structural verification evidence are captured for
+replay. The report is an audit trail: actions, failures, URL changes, failed
+requests, and hand-off/caution signals.

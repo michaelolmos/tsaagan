@@ -299,6 +299,8 @@ node kestrel.js bench
 | `totp secret=$KES_TOTP_SECRET` · `detect_captcha` | 2FA code · detect a CAPTCHA/anti-abuse wall → hand off to a human |
 | `paste text=".." [ref=\|selector=] [submit=true]` · `type_human` · `key_human keys="return"` | **OS-level input (macOS)** — trusted (`isTrusted=true`) keystrokes/paste for sites that ignore synthetic input |
 | `pace set=human\|slow\|fast` · `click_xy x= y=` · `keychain service= account=` | cadence governor · coordinate click · macOS Keychain secret |
+| `record_start name=..` · `record_stop [path=..]` · `replay path=..` · `report [format=json\|md]` | record/replay verified sequences · export audit reports |
+| `doctor` · `protocol` | local diagnostics · JSON Schema / TypeScript action protocol paths |
 | `run goal=".." [max=16]` · `serve [port=]` · `journal [n=]` · `bench` | autonomy |
 | `network [filter=] [limit=]` | captured XHR/fetch + responses (discover a site's internal API) |
 | `cookies [set=<json>]` | export / import cookies (session reuse) |
@@ -317,6 +319,33 @@ Start flags also include `proxy=http://user:pass@host:port` (e.g. a corporate pr
 | `brain` · `brain recall query=..` · `brain advise domain=..` · `brain synthesize domain=..` | evolving SQLite memory: stats · semantic recall · what-it-knows · compress lessons→rules |
 | `advise [domain=..] [query=..]` | what Kestrel learned about a site (also auto-surfaced in every `snapshot.memory`) |
 | `journal [n=]` | recent autonomous-run history |
+
+### Record, Replay, And Reports
+
+```bash
+kestrel record_start name=weekly-report
+kestrel goto url=https://example.com expectText="Example"
+kestrel click ref=e6 expectText="IANA"
+kestrel record_stop                         # writes ~/.kestrel/records/*.json
+kestrel replay path=/Users/me/.kestrel/records/...
+kestrel report format=md                    # writes ~/.kestrel/reports/*.md
+```
+
+Recording captures successful actions with structural `verify` evidence and stores
+stable role/name targets when a step was originally addressed by an a11y `ref`, so
+replays are less tied to one transient browser snapshot. Reports summarize actions,
+failures, verification blocks, failed requests, and human-handoff moments for audit
+or debugging.
+
+### Diagnostics And Protocol
+
+```bash
+kestrel doctor                              # local install/config health check
+kestrel protocol                            # paths to protocol/actions.schema.json + protocol/kestrel.d.ts
+```
+
+`doctor` does not start a browser; it checks local prerequisites, extension files,
+vault backend availability, daemon reachability, and shared-host token posture.
 
 ### Grounding priority
 `ref` (from a fresh snapshot) → `selector` (stable CSS) → `text` → `som` (vision). Never coordinates.
@@ -457,6 +486,7 @@ responsible for how you use it.
 | [docs/EXTENSION.md](docs/EXTENSION.md) | Extension mode: trusted, cross-platform, no-coordinate-math browser control |
 | [docs/API.md](docs/API.md) | API layer: Keychain vault + authenticated calls + browser-bootstrapped key setup |
 | [docs/AGENT.md](docs/AGENT.md) | Agent layer: SOUL/AGENTS/HEARTBEAT identity + SQLite brain memory & evolution |
+| [docs/PROTOCOL.md](docs/PROTOCOL.md) | JSON action protocol, schema, and TypeScript declarations |
 | [docs/RECIPES.md](docs/RECIPES.md) | Copy-paste recipes: login + 2FA, dashboards, API discovery, sites that reject naive automation |
 | [docs/BUILD_JOURNAL.md](docs/BUILD_JOURNAL.md) | How Kestrel was built — the research, decisions, and every feature wave |
 | [ROADMAP.md](ROADMAP.md) | What's next |

@@ -128,6 +128,10 @@ const state = {
   lastDialog: null,
   downloads: [], // {path, suggested, url, ts}
   downloadDir: path.join(HOME_KES, 'downloads'),
+  recordsDir: path.join(HOME_KES, 'records'),
+  reportsDir: path.join(HOME_KES, 'reports'),
+  actionLog: [], // recent top-level control-plane actions, for reports
+  recording: null, // {name, startedAt, steps}
   // Wave B: vision Set-of-Marks label -> selector map
   somMap: {},
   // Wave C: per-domain action cache + learned site memory
@@ -135,11 +139,152 @@ const state = {
   memoryDir: path.join(HOME_KES, 'memory'),
 };
 fs.mkdirSync(state.downloadDir, { recursive: true });
+fs.mkdirSync(state.recordsDir, { recursive: true });
+fs.mkdirSync(state.reportsDir, { recursive: true });
 fs.mkdirSync(state.memoryDir, { recursive: true });
 const RING = 250;
 function pushRing(arr, item) {
   arr.push(item);
   if (arr.length > RING) arr.shift();
+}
+
+const RECORDABLE_ACTIONS = new Set([
+  'goto', 'click', 'type', 'fill_form', 'select', 'press', 'upload_file',
+  'dismiss_overlays', 'click_xy', 'scroll', 'new_tab', 'back', 'forward',
+  'paste', 'type_human',
+]);
+const LOG_IGNORED_ACTIONS = new Set(['status', 'record_status']);
+const SECRET_KEY_RE = /secret|password|pass|token|authorization|cookie|totp/i;
+
+function slugify(s) {
+  return String(s || 'kestrel-run').toLowerCase().replace(/[^a-z0-9._-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80) || 'kestrel-run';
+}
+
+function redact(value, key = '') {
+  if (SECRET_KEY_RE.test(key)) return '[redacted]';
+  if (Array.isArray(value)) return value.map((v) => redact(v));
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, redact(v, k)]));
+  }
+  return value;
+}
+
+function compactResult(result = {}) {
+  const out = {
+    ok: !!result.ok,
+    ...(result.error ? { error: result.error } : {}),
+    ...(result.verify ? { verify: result.verify } : {}),
+  };
+  for (const k of ['url', 'path', 'mode', 'refs', 'count', 'selfHealed', 'botWall', 'consequential', 'needsConfirm', 'cacheHit']) {
+    if (result[k] !== undefined) out[k] = result[k];
+  }
+  return out;
+}
+
+function stableTargetArgs(args = {}) {
+  const out = JSON.parse(JSON.stringify(args || {}));
+  if (out.ref && state.lastRefMeta[out.ref]?.name) {
+    const meta = state.lastRefMeta[out.ref];
+    delete out.ref;
+    out.role = meta.role;
+    out.name = meta.name;
+  }
+  return out;
+}
+
+function stableReplayArgs(action, args = {}) {
+  const out = stableTargetArgs(args);
+  if (action === 'fill_form' && Array.isArray(out.fields)) out.fields = out.fields.map(stableTargetArgs);
+  return out;
+}
+
+function rememberAction(action, args, result, durationMs) {
+  if (LOG_IGNORED_ACTIONS.has(action)) return;
+  const entry = {
+    ts: Date.now(),
+    action,
+    args: redact(args || {}),
+    ok: !!result?.ok,
+    durationMs,
+    result: compactResult(result),
+  };
+  pushRing(state.actionLog, entry);
+  if (state.recording && RECORDABLE_ACTIONS.has(action) && result?.ok && result?.verify) {
+    state.recording.steps.push({
+      action,
+      args: stableReplayArgs(action, args),
+      recordedAt: entry.ts,
+      result: compactResult(result),
+    });
+  }
+}
+
+function writeJsonFile(file, data) {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, JSON.stringify(data, null, 2) + '\n');
+}
+
+function defaultRecordPath(name) {
+  return path.join(state.recordsDir, `${Date.now()}-${slugify(name)}.json`);
+}
+
+function defaultReportPath(format) {
+  return path.join(state.reportsDir, `${Date.now()}-report.${format === 'md' ? 'md' : 'json'}`);
+}
+
+function buildReport(limit = 100) {
+  const actions = state.actionLog.slice(-Number(limit || 100));
+  const failures = actions.filter((a) => !a.ok);
+  const handoffs = actions.filter((a) => a.result?.botWall || a.result?.needsConfirm || a.result?.consequential);
+  return {
+    ok: true,
+    generatedAt: new Date().toISOString(),
+    mode: state.mode,
+    url: state.page ? state.page.url() : null,
+    summary: {
+      actions: actions.length,
+      failures: failures.length,
+      handoffs: handoffs.length,
+      recordedSteps: state.recording?.steps?.length || 0,
+    },
+    actions,
+  };
+}
+
+function renderMarkdownReport(report) {
+  const lines = [
+    '# Kestrel Run Report',
+    '',
+    `Generated: ${report.generatedAt}`,
+    `Mode: ${report.mode}`,
+    `Final URL: ${report.url || ''}`,
+    '',
+    '## Summary',
+    '',
+    `- Actions: ${report.summary.actions}`,
+    `- Failures: ${report.summary.failures}`,
+    `- Handoffs / cautions: ${report.summary.handoffs}`,
+    `- Recorded steps in progress: ${report.summary.recordedSteps}`,
+    '',
+    '## Actions',
+    '',
+  ];
+  for (const [i, a] of report.actions.entries()) {
+    lines.push(`### ${i + 1}. ${a.action} - ${a.ok ? 'ok' : 'failed'}`);
+    lines.push('');
+    lines.push(`- Time: ${new Date(a.ts).toISOString()}`);
+    lines.push(`- Duration: ${a.durationMs} ms`);
+    if (a.result?.error) lines.push(`- Error: ${a.result.error}`);
+    if (a.result?.verify) {
+      lines.push(`- URL after: ${a.result.verify.urlAfter || ''}`);
+      lines.push(`- URL changed: ${!!a.result.verify.urlChanged}`);
+      if (a.result.verify.expectText) lines.push(`- Expected text found: ${!!a.result.verify.expectTextFound}`);
+      if (a.result.verify.expectUrl) lines.push(`- Expected URL matched: ${!!a.result.verify.expectUrlMatched}`);
+      if (a.result.verify.failedRequests?.length) lines.push(`- Failed requests: ${a.result.verify.failedRequests.join('; ')}`);
+    }
+    lines.push('');
+  }
+  return lines.join('\n');
 }
 
 // ---------- page wiring ----------
@@ -1129,6 +1274,84 @@ const actions = {
     return { ok: passed, passed, checks, url: state.page.url() };
   },
 
+  async record_start({ name = 'kestrel-run' }) {
+    state.recording = { name, startedAt: Date.now(), steps: [] };
+    return { ok: true, recording: true, name, startedAt: state.recording.startedAt };
+  },
+
+  async record_status() {
+    return {
+      ok: true,
+      recording: !!state.recording,
+      name: state.recording?.name || null,
+      startedAt: state.recording?.startedAt || null,
+      steps: state.recording?.steps?.length || 0,
+    };
+  },
+
+  async record_stop({ path: outPath } = {}) {
+    if (!state.recording) return { ok: false, error: 'no active recording' };
+    const record = {
+      ok: true,
+      version: 1,
+      name: state.recording.name,
+      startedAt: new Date(state.recording.startedAt).toISOString(),
+      stoppedAt: new Date().toISOString(),
+      mode: state.mode,
+      startUrl: state.recording.steps[0]?.result?.verify?.urlBefore || null,
+      finalUrl: state.page ? state.page.url() : null,
+      steps: state.recording.steps,
+    };
+    const file = outPath || defaultRecordPath(record.name);
+    writeJsonFile(file, record);
+    state.recording = null;
+    return { ok: true, path: file, steps: record.steps.length, finalUrl: record.finalUrl };
+  },
+
+  async replay({ path: file, stopOnFailure = true } = {}) {
+    if (!file) return { ok: false, error: 'path required' };
+    let record;
+    try {
+      record = JSON.parse(fs.readFileSync(file, 'utf8'));
+    } catch (e) {
+      return { ok: false, error: 'could not read replay file: ' + String(e?.message || e) };
+    }
+    const steps = Array.isArray(record.steps) ? record.steps : [];
+    const priorRecording = state.recording;
+    state.recording = null;
+    const results = [];
+    try {
+      for (let i = 0; i < steps.length; i++) {
+        const step = steps[i];
+        const started = Date.now();
+        const result = await invokeAction(step.action, step.args || {});
+        results.push({
+          index: i,
+          action: step.action,
+          args: redact(step.args || {}),
+          durationMs: Date.now() - started,
+          result: compactResult(result),
+        });
+        if (!result?.ok && stopOnFailure !== false) break;
+      }
+    } finally {
+      state.recording = priorRecording;
+    }
+    const ok = results.length === steps.length && results.every((r) => r.result.ok);
+    return { ok, path: file, steps: results.length, total: steps.length, results };
+  },
+
+  async report({ path: outPath, format = 'json', limit = 100 } = {}) {
+    const report = buildReport(limit);
+    if (state.page) report.title = await state.page.title().catch(() => '');
+    const fmt = format === 'md' || String(outPath || '').endsWith('.md') ? 'md' : 'json';
+    const file = outPath || defaultReportPath(fmt);
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    if (fmt === 'md') fs.writeFileSync(file, renderMarkdownReport(report) + '\n');
+    else writeJsonFile(file, report);
+    return { ok: true, path: file, format: fmt, summary: report.summary };
+  },
+
   async stop() {
     setTimeout(async () => {
       try {
@@ -1161,7 +1384,20 @@ function extCall(action, args) {
     }, 20000);
   });
 }
-const EXT_LOCAL = ['stop', 'totp'];
+const DAEMON_LOCAL_ACTIONS = new Set(['stop', 'totp', 'record_start', 'record_status', 'record_stop', 'replay', 'report']);
+const EXT_LOCAL = Array.from(DAEMON_LOCAL_ACTIONS);
+
+async function invokeAction(action, args = {}) {
+  if (state.ext) {
+    if (action === 'status')
+      return { ok: true, mode: 'extension', ready: state.ready, connected: state.ext.connected, queued: state.ext.queue.length };
+    if (!EXT_LOCAL.includes(action)) return extCall(action, args);
+  }
+  if (DAEMON_LOCAL_ACTIONS.has(action) && actions[action]) return actions[action](args);
+  const fn = state.native ? nativeActions[action] : actions[action];
+  if (!fn) return { ok: false, error: `unsupported action: ${action}` };
+  return fn(args);
+}
 
 // ---------- http control plane ----------
 const server = http.createServer((req, res) => {
@@ -1273,23 +1509,16 @@ const server = http.createServer((req, res) => {
       return json(400, { ok: false, error: 'bad json' });
     }
     const { action, args = {} } = payload;
-
-    // Extension mode: status is local; most verbs route to the extension.
-    if (state.ext) {
-      if (action === 'status')
-        return json(200, { ok: true, mode: 'extension', ready: state.ready, connected: state.ext.connected, queued: state.ext.queue.length });
-      if (!EXT_LOCAL.includes(action)) {
-        try { return json(200, await extCall(action, args)); }
-        catch (e) { return json(200, { ok: false, error: String(e?.message || e) }); }
-      }
-    }
-
-    const fn = state.native ? nativeActions[action] : actions[action];
-    if (!fn) return json(state.native || state.ext ? 400 : 404, { ok: false, error: `unsupported action: ${action}` });
+    const started = Date.now();
     try {
-      return json(200, await fn(args));
+      const result = await invokeAction(action, args);
+      const unsupported = result?.ok === false && /^unsupported action:/.test(result.error || '');
+      rememberAction(action, args, result, Date.now() - started);
+      return json(unsupported ? (state.native || state.ext ? 400 : 404) : 200, result);
     } catch (e) {
-      return json(200, { ok: false, error: String(e?.message || e), stack: String(e?.stack || '').split('\n').slice(0, 4) });
+      const result = { ok: false, error: String(e?.message || e), stack: String(e?.stack || '').split('\n').slice(0, 4) };
+      rememberAction(action, args, result, Date.now() - started);
+      return json(200, result);
     }
   });
 });

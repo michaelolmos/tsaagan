@@ -8,7 +8,7 @@
 //
 // Every non-start command POSTs {action,args} to the daemon and prints JSON.
 
-import { spawn } from 'node:child_process';
+import { execFileSync, spawn } from 'node:child_process';
 import path from 'node:path';
 import os from 'node:os';
 import fs from 'node:fs';
@@ -63,6 +63,69 @@ async function alive() {
 
 function print(o) {
   process.stdout.write(JSON.stringify(o, null, 2) + '\n');
+}
+
+function commandWorks(cmd, args = ['--version']) {
+  try {
+    execFileSync(cmd, args, { stdio: 'ignore', timeout: 5000 });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function check(status, name, message, fix) {
+  return { status, name, message, ...(fix ? { fix } : {}) };
+}
+
+async function runDoctor() {
+  const checks = [];
+  const major = Number(process.versions.node.split('.')[0]);
+  checks.push(
+    check(
+      major >= 20 ? 'pass' : 'fail',
+      'node',
+      `Node ${process.version}`,
+      major >= 20 ? undefined : 'Install Node 20 or newer.'
+    )
+  );
+  checks.push(check(fs.existsSync(path.join(__dirname, 'package-lock.json')) ? 'pass' : 'warn', 'npm lockfile', 'package-lock.json present', 'Run npm install to create a lockfile.'));
+  checks.push(check(fs.existsSync(path.join(__dirname, 'node_modules')) ? 'pass' : 'warn', 'dependencies', 'node_modules present', 'Run npm install.'));
+  try {
+    const pw = await import('playwright');
+    const chromePath = pw.chromium.executablePath();
+    checks.push(check('pass', 'playwright package', 'playwright imports successfully'));
+    checks.push(check(fs.existsSync(chromePath) ? 'pass' : 'warn', 'chromium binary', chromePath, 'Run: npx playwright install chromium chromium-headless-shell'));
+  } catch (e) {
+    checks.push(check('fail', 'playwright package', 'playwright could not be imported', 'Run npm install.'));
+  }
+  const extDir = path.join(__dirname, 'extension');
+  const extOk = fs.existsSync(path.join(extDir, 'manifest.json')) && fs.existsSync(path.join(extDir, 'background.js'));
+  checks.push(check(extOk ? 'pass' : 'fail', 'extension files', extDir, 'Restore extension/manifest.json and extension/background.js.'));
+  const vaultOk =
+    process.platform === 'darwin' ? commandWorks('security', ['help']) :
+    process.platform === 'linux' ? commandWorks('secret-tool', ['--version']) :
+    process.platform === 'win32' ? commandWorks('powershell', ['-NoProfile', '-Command', '$PSVersionTable.PSVersion.ToString()']) :
+    false;
+  checks.push(
+    check(
+      vaultOk ? 'pass' : 'warn',
+      'vault backend',
+      process.platform === 'darwin' ? 'macOS Keychain' : process.platform === 'linux' ? 'libsecret secret-tool' : process.platform === 'win32' ? 'Windows PowerShell DPAPI' : `unsupported platform ${process.platform}`,
+      process.platform === 'linux' ? 'Install libsecret-tools.' : undefined
+    )
+  );
+  let daemon = null;
+  try {
+    daemon = await send('status', {});
+    checks.push(check(daemon.ok ? 'pass' : 'warn', 'daemon', daemon.ok ? `running on ${URL}` : 'daemon returned a non-ok status', 'Run: node kestrel.js start'));
+  } catch {
+    checks.push(check('warn', 'daemon', `no daemon reachable on ${URL}`, 'Run: node kestrel.js start'));
+  }
+  checks.push(check(process.env.KES_TOKEN ? 'pass' : 'warn', 'control-plane token', process.env.KES_TOKEN ? 'KES_TOKEN is set' : 'KES_TOKEN is not set', 'Set KES_TOKEN on shared or multi-user machines.'));
+  const failures = checks.filter((c) => c.status === 'fail').length;
+  const warnings = checks.filter((c) => c.status === 'warn').length;
+  return { ok: failures === 0, checks, summary: { failures, warnings }, daemon };
 }
 
 if (cmd === 'start') {
@@ -169,6 +232,14 @@ if (cmd === 'start') {
     print(await b.getAdvice(dom, args.query));
   } else if (args.recall || args.query) print(await b.recall(typeof args.recall === 'string' ? args.recall : args.query || '', parseInt(args.limit || '10', 10)));
   else print(b.stats());
+} else if (cmd === 'doctor') {
+  print(await runDoctor());
+} else if (cmd === 'protocol') {
+  print({
+    ok: true,
+    schema: path.join(__dirname, 'protocol', 'actions.schema.json'),
+    types: path.join(__dirname, 'protocol', 'kestrel.d.ts'),
+  });
 } else if (cmd === 'ext-setup') {
   // Launch a browser with the companion extension preloaded and start the daemon
   // in extension mode. Resolution order:
@@ -261,11 +332,13 @@ if (cmd === 'start') {
       'kestrel click ref=e5 | click selector=.. | click text=..  [expectText=..] [expectGone=..]',
       'kestrel type ref=e3 text=".." [submit=true]',
       'kestrel select ref=e7 value=".."',
-      'kestrel press keys="Enter" | scroll [direction=down|up] [to_text=..]',
+      'kestrel press keys="Enter" [expectText=..] | scroll [direction=down|up] [to_text=..]',
       'kestrel wait_for [text=..|selector=..|url=..|networkidle=true] [timeout=15000]',
       'kestrel tabs | switch_tab index=1 | new_tab url=.. | close_tab [index=]',
       'kestrel back | forward | console_log [limit=20] | screenshot [path=..] [fullPage=true]',
+      'kestrel record_start name=.. | record_stop [path=..] | replay path=.. | report [format=json|md]',
       'kestrel stop',
+      '— diagnostics —     kestrel doctor   |   kestrel protocol',
       '— extension mode —  kestrel ext-setup [browser=chrome] [profile=clone]   (zero-step trusted input)',
       '— secrets/API —     kestrel vault set service=.. secret=.. | vault get|list|delete   |   kestrel api service=.. path=/..',
       '— memory —          kestrel brain [stats] | brain recall query=.. | brain advise domain=.. | advise domain=..',

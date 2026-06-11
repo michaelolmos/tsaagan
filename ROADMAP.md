@@ -11,6 +11,8 @@ contributions welcome.
 - **Closed learning loop** + **semantic recall** (embeddings: relevance × importance × recency),
   reflection-synthesis, look-ahead before irreversible actions, evaluator gate.
 - Self-learning (auto-capture selectors + auto-learn pacing), window-pinning.
+- Initial record/replay for verified sequences, local run reports, `doctor`
+  diagnostics, and protocol schema/types.
 
 ## Near-term
 - **Validate native + extension modes on Linux & Windows.** The `xdotool` (Linux) and
@@ -21,12 +23,12 @@ contributions welcome.
   AppleScript DOM read; today those rely on screenshot + vision + `click_xy`. A
   cross-platform CDP-free read (e.g. a tiny content-script bridge, or accessibility
   APIs) would restore richer grounding.
-- **Record & replay** — capture a verified action sequence and replay it
-  deterministically, building on the site-memory cache.
+- **Record & replay hardening** — broader replay fixtures, extension/native parity,
+  and richer target stabilization for dynamic apps.
 
 ## Medium-term
-- **Record & replay.** Capture a verified action sequence to a file and replay it
-  deterministically (building on the site-memory cache).
+- **Record & replay evolution.** Parameterized replays, data extraction outputs,
+  and replay diff reports.
 - **A real grounding model fallback.** A small GUI-grounding model for the vision
   path (UGround/OS-Atlas style) to improve coordinate accuracy on canvas UIs.
 - **Natural-motion input.** Mouse-path curves + dwell-time variance for native mode,

@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/michaelolmos/kestrel/protocol/actions.schema.json",
+  "title": "Kestrel action protocol",
+  "description": "JSON envelopes accepted by the Kestrel daemon control plane.",
+  "type": "object",
+  "required": ["action"],
+  "additionalProperties": false,
+  "properties": {
+    "action": {
+      "type": "string",
+      "enum": [
+        "status",
+        "goto",
+        "snapshot",
+        "click",
+        "type",
+        "fill_form",
+        "select",
+        "press",
+        "scroll",
+        "wait_for",
+        "extract",
+        "screenshot",
+        "tabs",
+        "switch_tab",
+        "new_tab",
+        "close_tab",
+        "back",
+        "forward",
+        "assert",
+        "detect_captcha",
+        "record_start",
+        "record_status",
+        "record_stop",
+        "replay",
+        "report"
+      ]
+    },
+    "args": {
+      "type": "object",
+      "default": {},
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "target": {
+      "type": "object",
+      "properties": {
+        "ref": { "type": "string" },
+        "som": { "type": ["string", "number"] },
+        "selector": { "type": "string" },
+        "text": { "type": "string" },
+        "role": { "type": "string" },
+        "name": { "type": "string" }
+      }
+    },
+    "verifyArgs": {
+      "type": "object",
+      "properties": {
+        "expectText": { "type": "string" },
+        "expectGone": { "type": "string" },
+        "expectUrl": { "type": "string" }
+      }
+    },
+    "verify": {
+      "type": "object",
+      "required": ["urlBefore", "urlAfter", "urlChanged", "newConsoleErrors", "failedRequests"],
+      "properties": {
+        "urlBefore": { "type": "string" },
+        "urlAfter": { "type": "string" },
+        "urlChanged": { "type": "boolean" },
+        "title": { "type": "string" },
+        "expectText": { "type": "string" },
+        "expectTextFound": { "type": "boolean" },
+        "expectGone": { "type": "string" },
+        "expectGoneConfirmed": { "type": "boolean" },
+        "expectUrl": { "type": "string" },
+        "expectUrlMatched": { "type": "boolean" },
+        "newConsoleErrors": { "type": "array", "items": { "type": "object" } },
+        "failedRequests": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": true
+    },
+    "baseResponse": {
+      "type": "object",
+      "required": ["ok"],
+      "properties": {
+        "ok": { "type": "boolean" },
+        "error": { "type": "string" },
+        "verify": { "$ref": "#/$defs/verify" }
+      },
+      "additionalProperties": true
+    }
+  }
+}
