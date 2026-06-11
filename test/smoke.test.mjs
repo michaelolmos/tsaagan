@@ -89,6 +89,20 @@ test('consequential click is blocked when target is addressed by ref', async () 
   assert.ok(!r.verify.urlAfter.endsWith('#deleted'), 'blocked ref click should not trigger the button handler');
 });
 
+test('type submits a form and verifies the resulting text', async () => {
+  const html = `
+    <form onsubmit="event.preventDefault(); document.querySelector('#out').textContent = 'Submitted: ' + document.querySelector('#q').value;">
+      <label>Query <input id="q" name="q"></label>
+      <button type="submit">Search</button>
+    </form>
+    <p id="out"></p>
+  `;
+  await bp('goto', { url: `data:text/html,${encodeURIComponent(html)}` });
+  const r = await bp('type', { selector: '#q', text: 'kestrel', submit: true, expectText: 'Submitted: kestrel' });
+  assert.equal(r.ok, true);
+  assert.equal(r.verify.expectTextFound, true);
+});
+
 test("snapshot flags verify-you're-human walls for handoff", async () => {
   const html = '<main><h1>Please verify you\'re human to continue</h1></main>';
   await bp('goto', { url: `data:text/html,${encodeURIComponent(html)}` });
