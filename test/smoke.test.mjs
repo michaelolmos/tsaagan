@@ -103,6 +103,25 @@ test('type submits a form and verifies the resulting text', async () => {
   assert.equal(r.verify.expectTextFound, true);
 });
 
+test('fill_form fails when its expected post-condition is missing', async () => {
+  const html = `
+    <label>First <input id="first"></label>
+    <label>Last <input id="last"></label>
+    <p id="out"></p>
+  `;
+  await bp('goto', { url: `data:text/html,${encodeURIComponent(html)}` });
+  const r = await bp('fill_form', {
+    fields: [
+      { selector: '#first', text: 'Ada' },
+      { selector: '#last', text: 'Lovelace' },
+    ],
+    expectText: 'Saved',
+  });
+  assert.equal(r.ok, false);
+  assert.equal(r.verify.expectTextFound, false);
+  assert.equal(r.fields.every((field) => field.ok), true);
+});
+
 test("snapshot flags verify-you're-human walls for handoff", async () => {
   const html = '<main><h1>Please verify you\'re human to continue</h1></main>';
   await bp('goto', { url: `data:text/html,${encodeURIComponent(html)}` });
