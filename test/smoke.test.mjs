@@ -98,6 +98,15 @@ test("snapshot flags verify-you're-human walls for handoff", async () => {
   assert.match(r.caution, /hand off to a human/i);
 });
 
+test('snapshot flags unusual-traffic walls for handoff', async () => {
+  const html = '<main><h1>We detected unusual traffic from your network</h1></main>';
+  await bp('goto', { url: `data:text/html,${encodeURIComponent(html)}` });
+  const r = await bp('snapshot', {});
+  assert.equal(r.ok, true);
+  assert.equal(r.botWall, true);
+  assert.match(r.caution, /hand off to a human/i);
+});
+
 test('vision Set-of-Marks returns numbered marks with coordinates', async () => {
   await bp('goto', { url: 'https://example.com' });
   const r = await bp('snapshot', { mode: 'vision' });
