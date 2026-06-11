@@ -74,6 +74,15 @@ test('blocked consequential click still returns verification evidence', async ()
   assert.ok(!r.verify.urlAfter.endsWith('#submitted'), 'blocked click should not trigger the button handler');
 });
 
+test("snapshot flags verify-you're-human walls for handoff", async () => {
+  const html = '<main><h1>Please verify you\'re human to continue</h1></main>';
+  await bp('goto', { url: `data:text/html,${encodeURIComponent(html)}` });
+  const r = await bp('snapshot', {});
+  assert.equal(r.ok, true);
+  assert.equal(r.botWall, true);
+  assert.match(r.caution, /hand off to a human/i);
+});
+
 test('vision Set-of-Marks returns numbered marks with coordinates', async () => {
   await bp('goto', { url: 'https://example.com' });
   const r = await bp('snapshot', { mode: 'vision' });

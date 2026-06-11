@@ -967,7 +967,7 @@ const actions = {
       ];
       const hit = sels.find((s) => document.querySelector(s));
       const bodyTxt = (document.body?.innerText || '').toLowerCase();
-      const phrase = ['verify you are human', 'are you a robot', "i'm not a robot", 'complete the captcha', 'checking your browser']
+      const phrase = ['verify you are human', "verify you're human", 'are you a robot', "i'm not a robot", 'complete the captcha', 'checking your browser']
         .find((p) => bodyTxt.includes(p));
       return { hit: hit || null, phrase: phrase || null };
     });
