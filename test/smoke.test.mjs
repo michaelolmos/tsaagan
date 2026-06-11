@@ -74,6 +74,21 @@ test('blocked consequential click still returns verification evidence', async ()
   assert.ok(!r.verify.urlAfter.endsWith('#submitted'), 'blocked click should not trigger the button handler');
 });
 
+test('consequential click is blocked when target is addressed by ref', async () => {
+  const html = '<button onclick="location.hash = \'deleted\'">Delete account</button>';
+  await bp('goto', { url: `data:text/html,${encodeURIComponent(html)}` });
+  const snap = await bp('snapshot', {});
+  const ref = (snap.snapshot.match(/button "Delete account" \[ref=(e\d+)\]/) || [])[1];
+  assert.ok(ref, 'should find the Delete account button ref');
+  const r = await bp('click', { ref });
+  assert.equal(r.ok, false);
+  assert.equal(r.consequential, true);
+  assert.equal(r.needsConfirm, true);
+  assert.equal(r.verify.actionTaken, false);
+  assert.equal(r.verify.urlChanged, false);
+  assert.ok(!r.verify.urlAfter.endsWith('#deleted'), 'blocked ref click should not trigger the button handler');
+});
+
 test("snapshot flags verify-you're-human walls for handoff", async () => {
   const html = '<main><h1>Please verify you\'re human to continue</h1></main>';
   await bp('goto', { url: `data:text/html,${encodeURIComponent(html)}` });

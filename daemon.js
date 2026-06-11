@@ -105,8 +105,8 @@ const human = () => new Promise((r) => setTimeout(r, paceMs()));
 // Heuristic: does this action look consequential / irreversible? Used to surface a
 // caution to the driving agent (and optionally hard-block via KES_CONFIRM_CONSEQUENTIAL).
 const CONSEQUENTIAL_RE = /\b(buy|purchase|pay|payment|checkout|place order|order now|delete|remove|send|transfer|withdraw|subscribe|unsubscribe|confirm|submit)\b/i;
-const consequentialSignal = (args) =>
-  CONSEQUENTIAL_RE.test([args.text, args.selector, args.expectText, args.value, args.label].filter(Boolean).join(' '));
+const consequentialSignal = (args, meta = {}) =>
+  CONSEQUENTIAL_RE.test([args.text, args.selector, args.expectText, args.value, args.label, meta?.name].filter(Boolean).join(' '));
 
 // ---------- state ----------
 const HOME_KES = path.join(os.homedir(), '.kestrel');
@@ -683,7 +683,8 @@ const actions = {
     // Guardrail: flag consequential/irreversible clicks so a human stays in the loop.
     // Non-blocking by default; hard-block when KES_CONFIRM_CONSEQUENTIAL=1 unless the
     // caller passes confirm=true (i.e. a human approved this specific action).
-    const consequential = consequentialSignal(args);
+    const refMeta = args.ref ? state.lastRefMeta[args.ref] : null;
+    const consequential = consequentialSignal(args, refMeta);
     if (consequential && process.env.KES_CONFIRM_CONSEQUENTIAL === '1' && !args.confirm) {
       const verify = await buildVerify(Date.now(), state.page.url(), args, {
         actionTaken: false,
@@ -691,7 +692,7 @@ const actions = {
       });
       return { ok: false, consequential: true, needsConfirm: true,
         verify,
-        error: `consequential action blocked (KES_CONFIRM_CONSEQUENTIAL=1) — have a human approve, then re-issue with confirm=true: ${args.text || args.selector || args.ref || args.som || ''}`.trim() };
+        error: `consequential action blocked (KES_CONFIRM_CONSEQUENTIAL=1) — have a human approve, then re-issue with confirm=true: ${args.text || refMeta?.name || args.selector || args.ref || args.som || ''}`.trim() };
     }
     const d = applyCache(args);
     await human();
