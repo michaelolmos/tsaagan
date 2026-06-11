@@ -24,7 +24,10 @@ const alive = async () => {
 };
 
 before(async () => {
-  daemon = spawn('node', [path.join(ROOT, 'daemon.js'), `--port=${PORT}`, '--headless=true'], { stdio: 'ignore' });
+  daemon = spawn('node', [path.join(ROOT, 'daemon.js'), `--port=${PORT}`, '--headless=true'], {
+    stdio: 'ignore',
+    env: { ...process.env, KES_CONFIRM_CONSEQUENTIAL: '1' },
+  });
   for (let i = 0; i < 60 && !(await alive()); i++) await new Promise((r) => setTimeout(r, 300));
   assert.ok(await alive(), 'daemon should become ready');
 });
@@ -57,6 +60,18 @@ test('click-by-ref navigates and self-heals a stale ref', async () => {
   const r = await bp('click', { ref, expectText: 'IANA' });
   assert.equal(r.ok, true);
   assert.equal(r.selfHealed, true, 'stale ref should self-heal');
+});
+
+test('blocked consequential click still returns verification evidence', async () => {
+  const html = '<button onclick="location.hash = \'submitted\'">Submit payment</button>';
+  await bp('goto', { url: `data:text/html,${encodeURIComponent(html)}` });
+  const r = await bp('click', { text: 'Submit payment' });
+  assert.equal(r.ok, false);
+  assert.equal(r.consequential, true);
+  assert.equal(r.needsConfirm, true);
+  assert.equal(r.verify.actionTaken, false);
+  assert.equal(r.verify.urlChanged, false);
+  assert.ok(!r.verify.urlAfter.endsWith('#submitted'), 'blocked click should not trigger the button handler');
 });
 
 test('vision Set-of-Marks returns numbered marks with coordinates', async () => {

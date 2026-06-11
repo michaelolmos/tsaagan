@@ -502,30 +502,20 @@ async function settle(timeout = 2500) {
   await state.page.waitForLoadState('networkidle', { timeout }).catch(() => {});
 }
 
-async function withVerify(fn, opts = {}) {
+async function buildVerify(startTs, beforeUrl, opts = {}, extra = {}) {
   const page = state.page;
-  // Timestamp the action boundary instead of array indices — state.console /
-  // state.responses are fixed-size ring buffers, so an index can go stale if many
-  // events fire during the action; a ts filter stays correct after the ring wraps.
-  const startTs = Date.now();
-  const before = { url: page.url() };
-  let actionError = null;
-  try {
-    await fn();
-  } catch (e) {
-    actionError = e;
-  }
   await settle();
   const newErrors = state.console.filter((e) => e.ts >= startTs);
   const newResp = state.responses.filter((r) => r.ts >= startTs);
   const failedResp = newResp.filter((r) => r.status >= 400);
   const verify = {
-    urlBefore: before.url,
+    urlBefore: beforeUrl,
     urlAfter: page.url(),
-    urlChanged: before.url !== page.url(),
+    urlChanged: beforeUrl !== page.url(),
     title: await page.title().catch(() => ''),
     newConsoleErrors: newErrors.slice(0, 8),
     failedRequests: failedResp.slice(0, 8).map((r) => `${r.status} ${r.url}`),
+    ...extra,
   };
   if (opts.expectText) {
     verify.expectText = opts.expectText;
@@ -554,6 +544,22 @@ async function withVerify(fn, opts = {}) {
   if (state.lastDialog && Date.now() - state.lastDialog.ts < 5000) {
     verify.dialog = state.lastDialog;
   }
+  return verify;
+}
+
+async function withVerify(fn, opts = {}) {
+  // Timestamp the action boundary instead of array indices — state.console /
+  // state.responses are fixed-size ring buffers, so an index can go stale if many
+  // events fire during the action; a ts filter stays correct after the ring wraps.
+  const startTs = Date.now();
+  const beforeUrl = state.page.url();
+  let actionError = null;
+  try {
+    await fn();
+  } catch (e) {
+    actionError = e;
+  }
+  const verify = await buildVerify(startTs, beforeUrl, opts);
   // A post-condition the caller asked for but that did not hold => not ok.
   const failedExpectation =
     (opts.expectText && verify.expectTextFound === false) ||
@@ -679,7 +685,12 @@ const actions = {
     // caller passes confirm=true (i.e. a human approved this specific action).
     const consequential = consequentialSignal(args);
     if (consequential && process.env.KES_CONFIRM_CONSEQUENTIAL === '1' && !args.confirm) {
+      const verify = await buildVerify(Date.now(), state.page.url(), args, {
+        actionTaken: false,
+        blocked: 'consequential-confirmation',
+      });
       return { ok: false, consequential: true, needsConfirm: true,
+        verify,
         error: `consequential action blocked (KES_CONFIRM_CONSEQUENTIAL=1) — have a human approve, then re-issue with confirm=true: ${args.text || args.selector || args.ref || args.som || ''}`.trim() };
     }
     const d = applyCache(args);
