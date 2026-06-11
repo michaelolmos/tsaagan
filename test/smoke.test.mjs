@@ -118,6 +118,7 @@ test('fill_form fails when its expected post-condition is missing', async () => 
     expectText: 'Saved',
   });
   assert.equal(r.ok, false);
+  assert.equal(r.error, 'post-condition not met');
   assert.equal(r.verify.expectTextFound, false);
   assert.equal(r.fields.every((field) => field.ok), true);
 });
