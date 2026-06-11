@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="430" viewBox="0 0 980 430" font-family="-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">
+  <rect width="980" height="430" fill="#ffffff"/>
+  <rect x="0.5" y="0.5" width="979" height="429" fill="none" stroke="#d0d7de"/>
+
+  <text x="36" y="42" font-size="25" font-weight="700" fill="#1a1a2e">🦅 Kestrel interacts like a person</text>
+  <text x="36" y="68" font-size="14" fill="#555">Real navigation, natural timing, trusted input — so automation you're authorized to run actually works reliably.</text>
+
+  <!-- three mode columns -->
+  <g>
+    <rect x="30"  y="92" width="290" height="196" rx="12" fill="#eaf2f8" stroke="#2a6f97" stroke-width="1.5"/>
+    <rect x="345" y="92" width="290" height="196" rx="12" fill="#e9f7ef" stroke="#1f8a4c" stroke-width="1.5"/>
+    <rect x="660" y="92" width="290" height="196" rx="12" fill="#f3eefb" stroke="#6f42c1" stroke-width="1.5"/>
+  </g>
+  <g font-size="16" font-weight="700">
+    <text x="52" y="122" fill="#2a6f97">CDP mode · default</text>
+    <text x="367" y="122" fill="#1f8a4c">Native mode</text>
+    <text x="682" y="122" fill="#6f42c1">Extension mode</text>
+  </g>
+  <g font-size="12.5" fill="#333">
+    <text x="52" y="150">Real Chrome via Playwright,</text>
+    <text x="52" y="170">automation flags cleaned up.</text>
+    <text x="52" y="196" fill="#666">Best for: dashboards, SaaS,</text>
+    <text x="52" y="214" fill="#666">internal tools — most of the web.</text>
+    <text x="52" y="244" font-weight="600" fill="#2a6f97">Fast · parallel · cross-platform</text>
+    <text x="52" y="266" fill="#888">isTrusted = false</text>
+
+    <text x="367" y="150">Real Chrome, no debug port,</text>
+    <text x="367" y="170">OS-level mouse + keyboard.</text>
+    <text x="367" y="196" fill="#666">Best for: strict sites where</text>
+    <text x="367" y="214" fill="#666">synthetic input is ignored.</text>
+    <text x="367" y="244" font-weight="600" fill="#1f8a4c">isTrusted = true (macOS)</text>
+    <text x="367" y="266" fill="#888">slower · single front window</text>
+
+    <text x="682" y="150">Companion extension drives</text>
+    <text x="682" y="170">the tab via chrome.debugger.</text>
+    <text x="682" y="196" fill="#666">Best for: trusted clicks at</text>
+    <text x="682" y="214" fill="#666">viewport coords, any platform.</text>
+    <text x="682" y="244" font-weight="600" fill="#6f42c1">isTrusted = true · no DPI math</text>
+    <text x="682" y="266" fill="#888">one command: ext-setup</text>
+  </g>
+
+  <!-- why it matters -->
+  <text x="36" y="324" font-size="13" fill="#555">Why trusted input? Many well-built pages <tspan font-weight="600" fill="#1a1a2e">ignore synthetic clicks</tspan> — so your agent's actions would silently do nothing. Trusted input makes them take effect.</text>
+
+  <!-- responsible-use band -->
+  <rect x="30" y="344" width="920" height="58" rx="10" fill="#fff7ed" stroke="#b5532a" stroke-width="1.3"/>
+  <text x="48" y="370" font-size="13" font-weight="700" fill="#9a3412">Responsible use</text>
+  <text x="48" y="390" font-size="12.5" fill="#7c3a16">Not for defeating security, solving CAPTCHAs, or violating Terms of Service. At a CAPTCHA / anti-abuse wall, Kestrel stops and hands control back to you.</text>
+</svg>

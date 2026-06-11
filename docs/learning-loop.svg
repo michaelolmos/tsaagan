@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="440" viewBox="0 0 980 440" font-family="-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">
+  <rect width="980" height="440" fill="#ffffff"/>
+  <rect x="0.5" y="0.5" width="979" height="439" fill="none" stroke="#d0d7de"/>
+
+  <text x="36" y="42" font-size="25" font-weight="700" fill="#1a1a2e">🦅 Kestrel learns from every run</text>
+  <text x="36" y="68" font-size="14" fill="#555">A closed loop — not just memory. Lessons change the next attempt and flow back to the driving agent.</text>
+
+  <!-- return arc (feedback) over the top -->
+  <path d="M 895 196 C 895 110, 700 96, 500 96 C 300 96, 115 110, 115 196" fill="none" stroke="#b5532a" stroke-width="2.5" stroke-dasharray="2 7" stroke-linecap="round"/>
+  <polygon points="115,196 109,184 121,184" fill="#b5532a"/>
+  <text x="500" y="120" text-anchor="middle" font-size="13" font-weight="600" fill="#b5532a">feeds back into the next observe→act  (ranked: relevance × importance × recency)</text>
+
+  <!-- 5 stage boxes -->
+  <g font-size="13" font-weight="700">
+    <rect x="30"  y="200" width="160" height="120" rx="11" fill="#eaf2f8" stroke="#2a6f97" stroke-width="1.5"/>
+    <text x="110" y="228" text-anchor="middle" fill="#2a6f97">ACT</text>
+    <rect x="234" y="200" width="160" height="120" rx="11" fill="#e9f7ef" stroke="#1f8a4c" stroke-width="1.5"/>
+    <text x="314" y="228" text-anchor="middle" fill="#1f8a4c">VERIFY</text>
+    <rect x="438" y="200" width="160" height="120" rx="11" fill="#fbeee6" stroke="#b5532a" stroke-width="1.5"/>
+    <text x="518" y="228" text-anchor="middle" fill="#b5532a">REFLECT</text>
+    <rect x="642" y="200" width="160" height="120" rx="11" fill="#f3eefb" stroke="#6f42c1" stroke-width="1.5"/>
+    <text x="722" y="228" text-anchor="middle" fill="#6f42c1">STORE</text>
+    <rect x="846" y="200" width="118" height="120" rx="11" fill="#fff7ed" stroke="#b5532a" stroke-width="1.5"/>
+    <text x="905" y="228" text-anchor="middle" fill="#9a3412">FEED BACK</text>
+  </g>
+  <g font-size="11" fill="#444">
+    <text x="110" y="252" text-anchor="middle">observe → act</text>
+    <text x="110" y="270" text-anchor="middle" fill="#777">drive the browser</text>
+
+    <text x="314" y="250" text-anchor="middle">url · text</text>
+    <text x="314" y="266" text-anchor="middle">console · network</text>
+    <text x="314" y="284" text-anchor="middle" fill="#777">+ validator gate</text>
+
+    <text x="518" y="248" text-anchor="middle">success → procedure</text>
+    <text x="518" y="265" text-anchor="middle">failure → LLM lesson</text>
+    <text x="518" y="282" text-anchor="middle">abuse → human pace</text>
+    <text x="518" y="299" text-anchor="middle" fill="#777">+ synthesize rules</text>
+
+    <text x="722" y="250" text-anchor="middle">SQLite brain</text>
+    <text x="722" y="267" text-anchor="middle">rules · lessons</text>
+    <text x="722" y="284" text-anchor="middle">procedures · episodes</text>
+    <text x="722" y="301" text-anchor="middle" fill="#777">+ importance score</text>
+
+    <text x="905" y="252" text-anchor="middle">snapshot.memory</text>
+    <text x="905" y="270" text-anchor="middle">rules / lessons</text>
+    <text x="905" y="288" text-anchor="middle">/ pace</text>
+  </g>
+
+  <!-- arrows between boxes -->
+  <g stroke="#9aa4b2" stroke-width="2" fill="#9aa4b2">
+    <line x1="190" y1="260" x2="228" y2="260"/><polygon points="234,260 224,255 224,265"/>
+    <line x1="394" y1="260" x2="432" y2="260"/><polygon points="438,260 428,255 428,265"/>
+    <line x1="598" y1="260" x2="636" y2="260"/><polygon points="642,260 632,255 632,265"/>
+    <line x1="802" y1="260" x2="840" y2="260"/><polygon points="846,260 836,255 836,265"/>
+  </g>
+
+  <text x="36" y="372" font-size="12.5" fill="#555">Before irreversible actions (submit/buy/delete) Kestrel <tspan font-weight="600" fill="#1a1a2e">looks ahead</tspan> — imagines the outcome and skips it if it looks wrong.</text>
+  <text x="36" y="394" font-size="12.5" fill="#555">Procedures are stored <tspan font-weight="600" fill="#1a1a2e">only on validator + structurally-verified success</tspan>, so false positives never poison the skill memory.</text>
+  <text x="36" y="416" font-size="11.5" fill="#777">Memory lives on your machine (~/.kestrel) — not in a model, not in the cloud. Embeddings: zero-dep by default, neural if KES_EMBED_URL / transformers is present.</text>
+</svg>

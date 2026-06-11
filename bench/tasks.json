@@ -1,0 +1,30 @@
+[
+  {
+    "id": "example-heading",
+    "goal": "Go to example.com and report the main heading text of the page",
+    "start_url": "https://example.com",
+    "max": 5,
+    "check": { "text": "example" }
+  },
+  {
+    "id": "iana-followlink",
+    "goal": "Starting on example.com, click the 'More information' link, then report the title of the page you land on",
+    "start_url": "https://example.com",
+    "max": 6,
+    "check": { "url": "iana" }
+  },
+  {
+    "id": "wikipedia-search",
+    "goal": "On wikipedia.org, use the search box to search for 'Alan Turing', open his article, and report the year he was born",
+    "start_url": "https://www.wikipedia.org",
+    "max": 8,
+    "check": { "text": "1912" }
+  },
+  {
+    "id": "hn-top-story",
+    "goal": "Go to news.ycombinator.com and report the exact title of the number 1 top story",
+    "start_url": "https://news.ycombinator.com",
+    "max": 6,
+    "check": { "url": "ycombinator" }
+  }
+]

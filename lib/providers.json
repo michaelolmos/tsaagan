@@ -1,0 +1,11 @@
+{
+  "openai":     { "base": "https://api.openai.com/v1",        "authHeader": "Authorization", "authScheme": "Bearer", "keyUrl": "https://platform.openai.com/api-keys",        "docs": "https://platform.openai.com/docs" },
+  "anthropic":  { "base": "https://api.anthropic.com/v1",     "authHeader": "x-api-key",     "authScheme": "",       "keyUrl": "https://console.anthropic.com/settings/keys", "docs": "https://docs.anthropic.com", "extraHeaders": { "anthropic-version": "2023-06-01" } },
+  "groq":       { "base": "https://api.groq.com/openai/v1",   "authHeader": "Authorization", "authScheme": "Bearer", "keyUrl": "https://console.groq.com/keys",               "docs": "https://console.groq.com/docs" },
+  "github":     { "base": "https://api.github.com",           "authHeader": "Authorization", "authScheme": "Bearer", "keyUrl": "https://github.com/settings/tokens",          "docs": "https://docs.github.com/rest" },
+  "stripe":     { "base": "https://api.stripe.com/v1",        "authHeader": "Authorization", "authScheme": "Bearer", "keyUrl": "https://dashboard.stripe.com/apikeys",        "docs": "https://docs.stripe.com/api" },
+  "resend":     { "base": "https://api.resend.com",           "authHeader": "Authorization", "authScheme": "Bearer", "keyUrl": "https://resend.com/api-keys",                 "docs": "https://resend.com/docs" },
+  "cloudflare": { "base": "https://api.cloudflare.com/client/v4", "authHeader": "Authorization", "authScheme": "Bearer", "keyUrl": "https://dash.cloudflare.com/profile/api-tokens", "docs": "https://developers.cloudflare.com/api" },
+  "notion":     { "base": "https://api.notion.com/v1",        "authHeader": "Authorization", "authScheme": "Bearer", "keyUrl": "https://www.notion.so/my-integrations",       "docs": "https://developers.notion.com", "extraHeaders": { "Notion-Version": "2022-06-28" } },
+  "supabase":   { "base": "",                                  "authHeader": "Authorization", "authScheme": "Bearer", "keyUrl": "https://supabase.com/dashboard/account/tokens", "docs": "https://supabase.com/docs" }
+}
