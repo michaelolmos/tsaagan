@@ -3,3 +3,10 @@ node_modules/
 *.log
 .DS_Store
 /tmp/
+.env
+# python client build/cache
+__pycache__/
+*.pyc
+*.egg-info/
+clients/python/dist/
+clients/python/build/

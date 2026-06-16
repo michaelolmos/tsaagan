@@ -1,0 +1,29 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "kestrel-browser"
+version = "1.0.0"
+description = "Verify-first, human-like browser control for AI agents — Python client for the Kestrel daemon."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "Michael Olmos" }]
+keywords = ["browser-automation", "ai-agent", "playwright", "web-agent", "browser-agent", "mcp", "llm", "agentic"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Topic :: Software Development :: Libraries",
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/michaelolmos/kestrel"
+Repository = "https://github.com/michaelolmos/kestrel"
+Issues = "https://github.com/michaelolmos/kestrel/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["kestrel_browser"]

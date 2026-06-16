@@ -310,6 +310,38 @@ tools — `kestrel_navigate`, `kestrel_snapshot`, `kestrel_click`, `kestrel_fill
 Set `KESTREL_HEADLESS=0` to watch it work, or `KES_TOKEN` to lock the control plane on
 shared machines. See [docs/PROTOCOL.md](docs/PROTOCOL.md).
 
+## Use it from your own code (JS & Python SDK)
+
+Prefer calling Kestrel programmatically? Both clients return a `verify` block on
+**every** call — data *and* proof, together (the thing other tools make you assert yourself).
+
+**JavaScript / TypeScript** (`sdk/`, zero dependencies):
+
+```js
+import { createKestrel } from 'kestrel/sdk';   // or '/path/to/kestrel/sdk/index.mjs'
+
+const k = await createKestrel();                // auto-starts a headless daemon
+await k.goto('https://example.com', { expectText: 'Example Domain' });
+const r = await k.extract('the page heading');
+console.log(r.data, r.verify);                  // data + { urlChanged, expectTextFound, newConsoleErrors, ... }
+await k.stop();
+```
+
+**Python** (`pip install kestrel-browser`, zero dependencies):
+
+```python
+from kestrel_browser import Kestrel
+
+k = Kestrel()                                   # auto-starts a headless daemon
+k.goto("https://example.com", expect_text="Example Domain")
+r = k.extract("the page heading")
+print(r.data, r.verify)
+k.stop()
+```
+
+The Python client needs the Node daemon reachable — set `KESTREL_JS=/path/to/kestrel.js`
+or put the `kestrel` binary on PATH. See [clients/python/](clients/python/).
+
 ## Autonomous mode
 
 ```bash
@@ -341,8 +373,21 @@ curl -s localhost:39820/goal -d '{"goal":"...","max":16}'
 ## Benchmark
 
 ```bash
-node kestrel.js bench
+node kestrel.js bench          # autonomous task suite + deterministic capability matrix
 ```
+
+Latest run (Groq brain, 4-task suite):
+
+| Metric | Result |
+|---|---|
+| Task success | 3/4 (75%) |
+| **Self-heal** (recover from stale refs) | ✅ pass |
+| **Vision Set-of-Marks** | ✅ pass |
+| **Structural verify** (post-conditions) | ✅ pass |
+
+A directly-comparable WebVoyager score is in progress — see
+[bench/METHODOLOGY.md](bench/METHODOLOGY.md) for exactly how it will be run and
+reported honestly (homepage-start, no post-hoc judge overrides, published task set).
 
 ---
 
