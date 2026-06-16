@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/banner.svg" alt="Kestrel — human-like browser control for AI agents" width="100%">
+  <img src="docs/hero.png" alt="Kestrel — human-like browser control for AI agents" width="100%">
 </p>
 
 <p align="center">
