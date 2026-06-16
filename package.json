@@ -21,13 +21,15 @@
     "browser-agent",
     "accessibility-tree",
     "llm",
-    "agentic"
+    "agentic",
+    "mcp",
+    "model-context-protocol"
   ],
   "license": "MIT",
   "repository": { "type": "git", "url": "git+https://github.com/michaelolmos/kestrel.git" },
   "homepage": "https://github.com/michaelolmos/kestrel#readme",
   "bugs": { "url": "https://github.com/michaelolmos/kestrel/issues" },
-  "files": ["daemon.js", "kestrel.js", "agent.js", "native.js", "run.js", "server.js", "bench.js", "lib/", "bench/", "docs/", "extension/", "protocol/", "SOUL.md", "AGENTS.md", "HEARTBEAT.md", "README.md", "LICENSE", "ACCEPTABLE_USE.md", "SECURITY.md"],
+  "files": ["daemon.js", "kestrel.js", "agent.js", "native.js", "run.js", "server.js", "bench.js", "lib/", "bench/", "docs/", "extension/", "protocol/", "mcp/", "SOUL.md", "AGENTS.md", "HEARTBEAT.md", "README.md", "LICENSE", "ACCEPTABLE_USE.md", "SECURITY.md"],
   "optionalDependencies": {},
   "engines": {
     "node": ">=20"

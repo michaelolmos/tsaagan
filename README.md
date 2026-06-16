@@ -178,6 +178,42 @@ It's three things in one:
 
 ---
 
+## How Kestrel compares
+
+The browser-agent space is crowded — and Kestrel is the new, small project here. It
+doesn't try to out-scale [browser-use](https://github.com/browser-use/browser-use) or
+out-distribute Microsoft's [playwright-mcp](https://github.com/microsoft/playwright-mcp).
+It wins on a different axis: **reliability you can audit.** The one capability every
+other tool lacks — structural proof that each action worked — is Kestrel's core.
+
+| Capability | Kestrel | browser-use | stagehand | playwright-mcp | skyvern |
+|---|:---:|:---:|:---:|:---:|:---:|
+| **Verify-first** (post-condition proof per action) | ✅ core | ❌ | ❌ | ❌ | ⚠️ vision |
+| **API-first layer** (skip the browser when a site has an API) | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Self-healing stable a11y refs | ✅ | ⚠️ | ⚠️ | ⚠️ | ❌ |
+| OS-keychain vault + TOTP/2FA | ✅ | ❌ | ❌ | ❌ | ⚠️ cloud |
+| Cross-session site memory (semantic recall) | ✅ | ❌ | ⚠️ | ❌ | ❌ |
+| MCP server | ✅ | ❌ | ✅ | ✅ | ❌ |
+| Trusted input, no CDP debug port (native + MV3) | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Vision fallback (Set-of-Marks) | ✅ | ✅ | ✅ | ❌ | ✅ |
+| Local / offline capable | ✅ | ✅ | ❌ | ✅ | ❌ |
+| Model-agnostic (bring your own LLM) | ✅ | ✅ | ✅ | ✅ | ⚠️ |
+| Language | Node.js | Python | TypeScript | TypeScript | Python |
+| License | MIT | MIT | MIT | Apache-2.0 | AGPL-3.0 |
+| Published WebVoyager score | ⚠️ in progress | ✅ ~89% | ⚠️ | ❌ | ✅ ~86% |
+| GitHub stars (Jun 2026) | early | ~99k | ~23k | ~34k | ~22k |
+| Cloud / hosted option | ❌ self-host | ⚠️ | ❌ Browserbase | ❌ | ✅ |
+
+✅ supported · ⚠️ partial/workaround · ❌ not supported
+
+> **Honest notes.** Kestrel is young — fewer stars, no Python client yet, no hosted
+> option, and its benchmark number is still being run (published scores across tools
+> use different WebVoyager task subsets and aren't directly comparable). What it
+> uniquely offers: proof-of-success on every action, an API-first fast path, a local
+> credential vault, and trusted-input modes that need no debug port.
+
+---
+
 ## How it works — tool, skill, or agent?
 
 ![Kestrel architecture](docs/architecture.svg)
@@ -243,6 +279,36 @@ node kestrel.js stop
 ```
 
 Add an alias: `alias kestrel="node $PWD/kestrel.js"`.
+
+## Use it from Claude Desktop, Claude Code, or Cursor (MCP)
+
+Kestrel ships a built-in **MCP server**, so any [Model Context Protocol](https://modelcontextprotocol.io)
+host can drive the browser directly. Unlike other browser MCP servers, **every mutating
+tool returns Kestrel's `verify` block** (URL changed? console errors? expected text?) —
+proof the action worked, in the same response, with no extra snapshot round-trip.
+
+**Claude Code:**
+
+```bash
+claude mcp add kestrel -- node /path/to/kestrel/kestrel.js mcp
+# or, if you've installed the `kestrel` bin globally:  claude mcp add kestrel -- kestrel mcp
+```
+
+**Claude Desktop** (`claude_desktop_config.json`) or **Cursor** (`~/.cursor/mcp.json`):
+
+```json
+{
+  "mcpServers": {
+    "kestrel": { "command": "node", "args": ["/path/to/kestrel/kestrel.js", "mcp"] }
+  }
+}
+```
+
+The server **auto-starts a headless daemon** on first use. It exposes 21 verify-first
+tools — `kestrel_navigate`, `kestrel_snapshot`, `kestrel_click`, `kestrel_fill_form`,
+`kestrel_extract`, `kestrel_network` (discover a site's own data API), and more.
+Set `KESTREL_HEADLESS=0` to watch it work, or `KES_TOKEN` to lock the control plane on
+shared machines. See [docs/PROTOCOL.md](docs/PROTOCOL.md).
 
 ## Autonomous mode
 

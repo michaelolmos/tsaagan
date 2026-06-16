@@ -175,6 +175,12 @@ if (cmd === 'start') {
   });
   child.unref();
   print({ ok: true, started: 'agent server', log: path.join(logDir, 'server.log'), hint: 'POST /goal to it' });
+} else if (cmd === 'mcp') {
+  // Model Context Protocol server over stdio — exposes Kestrel's verify-first
+  // browser control to Claude Desktop / Claude Code / Cursor / any MCP host.
+  // Takes over stdin/stdout for JSON-RPC; do not print() here.
+  const m = await import('./mcp/server.mjs');
+  m.start();
 } else if (cmd === 'journal') {
   const f = path.join(os.homedir(), '.kestrel', 'agent', 'journal.jsonl');
   try {
@@ -343,6 +349,7 @@ if (cmd === 'start') {
       '— secrets/API —     kestrel vault set service=.. secret=.. | vault get|list|delete   |   kestrel api service=.. path=/..',
       '— memory —          kestrel brain [stats] | brain recall query=.. | brain advise domain=.. | advise domain=..',
       '— autonomous —      kestrel run goal=".." [max=]   |   kestrel serve [port=39820]   |   kestrel journal [n=]   |   kestrel bench',
+      '— MCP (agents) —    kestrel mcp        (stdio MCP server: verify-first browser tools for Claude Desktop / Code / Cursor)',
     ],
   });
 } else {
