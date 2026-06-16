@@ -215,7 +215,7 @@ if (cmd === 'start') {
     print({ ok: false, error: String(e?.message || e) });
   }
 } else if (cmd === 'api') {
-  // Layer 3 — authenticated API calls with a stored key (no browser).
+  // Layer 1 — authenticated API calls with a stored key (no browser).
   const a = await import('./lib/api.js');
   if (args.providers) print({ ok: true, providers: Object.keys(a.PROVIDERS) });
   else if (args.detect) print(a.detectApi(typeof args.detect === 'string' ? args.detect : args.url || args.host));
