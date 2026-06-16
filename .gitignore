@@ -10,3 +10,6 @@ __pycache__/
 *.egg-info/
 clients/python/dist/
 clients/python/build/
+# private launch material — drafts, strategy, generated art picks (never publish)
+launch/
+LAUNCH_PLAN.md
