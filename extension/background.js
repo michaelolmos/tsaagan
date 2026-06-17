@@ -7,6 +7,13 @@
 
 const DAEMON = `http://127.0.0.1:${self.KESTREL_PORT || 39817}`;
 
+// Per-session bridge token. `ext-setup` writes ext-token.js (which sets
+// self.KESTREL_EXT_TOKEN) into this extension dir before Chrome loads the
+// extension; importing it is best-effort so the worker still loads if absent.
+try { importScripts('ext-token.js'); } catch {}
+const EXT_TOKEN = self.KESTREL_EXT_TOKEN || '';
+const EXT_HEADERS = EXT_TOKEN ? { 'x-kestrel-ext-token': EXT_TOKEN } : {};
+
 function dbg(tabId, method, params) {
   return new Promise((resolve, reject) =>
     chrome.debugger.sendCommand({ tabId }, method, params || {}, (r) =>
@@ -167,7 +174,7 @@ async function handle(cmd) {
       if (!filePaths.length) return { ok: false, error: 'no file paths provided (path= required)' };
       // Mark the target input with a unique attribute so CDP can re-find it after
       // we switch from the scripting world into the debugger world.
-      const mark = 'k' + Math.random().toString(36).slice(2);
+      const mark = 'k' + Array.from(crypto.getRandomValues(new Uint8Array(8))).map((b) => b.toString(16).padStart(2, '0')).join('');
       const rf = args.ref != null && /^\d+$/.test(String(args.ref)) ? String(args.ref) : null;
       const [{ result: found }] = await chrome.scripting.executeScript({
         target: { tabId: t.id },
@@ -310,24 +317,32 @@ let running = false;
 async function loop() {
   if (running) return;
   running = true;
+  // Exponential backoff for a persistently-down daemon: start at 1.5s, double up to
+  // 30s so a crashed daemon / disconnected network can't pin the worker in a tight
+  // 1.5s retry loop. Reset to the floor after any successful poll cycle.
+  const BACKOFF_MIN = 1500;
+  const BACKOFF_MAX = 30000;
+  let backoff = BACKOFF_MIN;
   try {
     for (;;) {
       try {
         // Abort a stalled long-poll (TCP half-open / daemon hung) so the loop can't
         // wedge forever; the daemon's own long-poll returns within ~25s.
-        const r = await fetch(DAEMON + '/ext/next', { signal: AbortSignal.timeout(35000) });
+        const r = await fetch(DAEMON + '/ext/next', { headers: EXT_HEADERS, signal: AbortSignal.timeout(35000) });
         const cmd = await r.json();
         if (cmd && cmd.action) {
           const result = await handle(cmd);
           await fetch(DAEMON + '/ext/result', {
             method: 'POST',
-            headers: { 'content-type': 'application/json' },
+            headers: { 'content-type': 'application/json', ...EXT_HEADERS },
             body: JSON.stringify({ id: cmd.id, result }),
             signal: AbortSignal.timeout(35000),
           });
         }
+        backoff = BACKOFF_MIN; // healthy cycle — reset backoff
       } catch (e) {
-        await new Promise((res) => setTimeout(res, 1500)); // daemon not up / not in extension mode / poll timed out
+        await new Promise((res) => setTimeout(res, backoff)); // daemon not up / not in extension mode / poll timed out
+        backoff = Math.min(backoff * 2, BACKOFF_MAX);
       }
     }
   } finally {

@@ -372,7 +372,7 @@ for reasoning while a fast model handles navigation).
 
 ```bash
 node kestrel.js serve port=39820
-curl -s localhost:39820/goal -d '{"goal":"...","max":16}'
+curl -s localhost:39820/goal -H 'content-type: application/json' -d '{"goal":"...","max":16}'
 ```
 
 ## Benchmark

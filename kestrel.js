@@ -300,6 +300,18 @@ if (cmd === 'start') {
       process.exit(1);
     }
   }
+  // Stage the daemon's per-session bridge token into the extension dir so the
+  // companion service worker can import it (importScripts only reads packaged
+  // files). The daemon wrote it to ~/.kestrel/ext-token.js at startup; copy it in
+  // before Chrome loads the extension. Without it the /ext/* bridge rejects the
+  // companion's polls with 401.
+  try {
+    const tokenSrc = path.join(os.homedir(), '.kestrel', 'ext-token.js');
+    fs.copyFileSync(tokenSrc, path.join(extDir, 'ext-token.js'));
+  } catch (e) {
+    print({ ok: false, error: 'could not stage extension token (is the daemon up?): ' + String(e?.message || e) });
+    process.exit(1);
+  }
   const chromeArgs = [`--user-data-dir=${profileDir}`, `--disable-extensions-except=${extDir}`, `--load-extension=${extDir}`, '--no-first-run', '--no-default-browser-check', args.url || 'about:blank'];
   spawn(bin, chromeArgs, { detached: true, stdio: 'ignore' }).unref();
   let connected = false;

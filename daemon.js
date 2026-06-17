@@ -16,6 +16,7 @@ import http from 'node:http';
 import path from 'node:path';
 import os from 'node:os';
 import fs from 'node:fs';
+import crypto from 'node:crypto';
 import { execFile } from 'node:child_process';
 import { nativeLaunch, makeNativeActions } from './native.js';
 import { totpCode } from './lib/totp.js';
@@ -224,6 +225,27 @@ function writeJsonFile(file, data) {
   fs.writeFileSync(file, JSON.stringify(data, null, 2) + '\n');
 }
 
+// Confine a caller-supplied output path to an allowlisted base (~/.kestrel or the
+// OS temp dir). The driving model can be steered by a prompt-injecting page (see
+// SECURITY.md), so a path like `report path=~/.zshrc` must not become an
+// arbitrary-file-overwrite primitive. Default paths already live under these bases,
+// so normal behavior is unchanged. Returns the resolved path or throws.
+const OUTPUT_BASES = (() => {
+  const bases = [HOME_KES, os.tmpdir()];
+  // On macOS os.tmpdir() (/var/folders/…) is a symlink to /private/var/folders/…;
+  // include the canonical form so the daemon's own default temp paths pass too.
+  try { bases.push(fs.realpathSync(os.tmpdir())); } catch {}
+  return [...new Set(bases)];
+})();
+function containedOutputPath(p) {
+  const resolved = path.resolve(String(p));
+  const ok = OUTPUT_BASES.some((base) => resolved === base || resolved.startsWith(base + path.sep));
+  if (!ok) {
+    throw new Error(`output path must be inside ~/.kestrel or the temp dir (got: ${resolved})`);
+  }
+  return resolved;
+}
+
 function defaultRecordPath(name) {
   return path.join(state.recordsDir, `${Date.now()}-${slugify(name)}.json`);
 }
@@ -361,7 +383,17 @@ async function launch() {
     // Drive the user's real Chrome through the Kestrel companion extension
     // (chrome.debugger Input → isTrusted=true, viewport coords → no screen math).
     // No Playwright; commands are bridged to the extension via HTTP long-poll.
-    state.ext = { queue: [], waiters: [], pending: {}, seq: 0, connected: false };
+    // A per-session token authenticates the bridge: without it ANY web page could
+    // `fetch('http://127.0.0.1:<port>/ext/next')`, steal queued commands (which carry
+    // typed passwords / TOTP / upload paths) and forge `/ext/result` responses. The
+    // token is written to a file the companion service worker imports at load time,
+    // so a page (which can't read local files) can never present it.
+    state.ext = { queue: [], waiters: [], pending: {}, seq: 0, connected: false, token: crypto.randomBytes(24).toString('hex') };
+    try {
+      fs.writeFileSync(path.join(HOME_KES, 'ext-token.js'), `self.KESTREL_EXT_TOKEN = ${JSON.stringify(state.ext.token)};\n`, { mode: 0o600 });
+    } catch (e) {
+      console.log('[kestrel] WARNING: could not write ext-token file: ' + String(e?.message || e));
+    }
     state.ready = true;
     return;
   }
@@ -1050,7 +1082,12 @@ const actions = {
   },
 
   async screenshot({ path: p, fullPage }) {
-    const out = p || path.join(os.tmpdir(), `kestrel-${Date.now()}.png`);
+    let out;
+    try {
+      out = p ? containedOutputPath(p) : path.join(os.tmpdir(), `kestrel-${Date.now()}.png`);
+    } catch (e) {
+      return { ok: false, error: String(e?.message || e) };
+    }
     await state.page.screenshot({ path: out, fullPage: !!fullPage });
     return { ok: true, path: out };
   },
@@ -1249,7 +1286,12 @@ const actions = {
 
   // Save the current page as a PDF (headless Chromium only).
   async pdf({ path: p }) {
-    const out = p || path.join(os.tmpdir(), `kestrel-${Date.now()}.pdf`);
+    let out;
+    try {
+      out = p ? containedOutputPath(p) : path.join(os.tmpdir(), `kestrel-${Date.now()}.pdf`);
+    } catch (e) {
+      return { ok: false, error: String(e?.message || e) };
+    }
     try {
       await state.page.pdf({ path: out, printBackground: true });
       return { ok: true, path: out };
@@ -1302,7 +1344,12 @@ const actions = {
       finalUrl: state.page ? state.page.url() : null,
       steps: state.recording.steps,
     };
-    const file = outPath || defaultRecordPath(record.name);
+    let file;
+    try {
+      file = outPath ? containedOutputPath(outPath) : defaultRecordPath(record.name);
+    } catch (e) {
+      return { ok: false, error: String(e?.message || e) };
+    }
     writeJsonFile(file, record);
     state.recording = null;
     return { ok: true, path: file, steps: record.steps.length, finalUrl: record.finalUrl };
@@ -1345,7 +1392,12 @@ const actions = {
     const report = buildReport(limit);
     if (state.page) report.title = await state.page.title().catch(() => '');
     const fmt = format === 'md' || String(outPath || '').endsWith('.md') ? 'md' : 'json';
-    const file = outPath || defaultReportPath(fmt);
+    let file;
+    try {
+      file = outPath ? containedOutputPath(outPath) : defaultReportPath(fmt);
+    } catch (e) {
+      return { ok: false, error: String(e?.message || e) };
+    }
     fs.mkdirSync(path.dirname(file), { recursive: true });
     if (fmt === 'md') fs.writeFileSync(file, renderMarkdownReport(report) + '\n');
     else writeJsonFile(file, report);
@@ -1409,20 +1461,50 @@ const server = http.createServer((req, res) => {
     res.writeHead(code, { 'content-type': 'application/json' });
     res.end(JSON.stringify(obj));
   };
+  // DNS-rebinding defense: this is a loopback-only service, so only answer requests
+  // addressed to a loopback Host. A rebound attacker page reaches us with
+  // Host=<their-domain>:PORT and (being same-origin post-rebind) sends no Origin,
+  // slipping past the Origin gate below — pinning the Host header closes that. Every
+  // legit caller (CLI/SDK/MCP/extension) connects to 127.0.0.1:PORT. Applies to /ext/* too.
+  const host = String(req.headers.host || '');
+  if (![`127.0.0.1:${PORT}`, `localhost:${PORT}`, `[::1]:${PORT}`].includes(host)) {
+    return json(403, { ok: false, error: 'invalid Host header (loopback only)' });
+  }
   const isExt = !!(req.url && req.url.startsWith('/ext/'));
 
   // The companion extension's service worker (a chrome-extension:// origin) is the
   // ONLY legitimate cross-origin caller, and only on /ext/*. Those routes answer
   // CORS + Chrome's Private Network Access preflight (Chrome 130+ blocks a worker
-  // from reaching 127.0.0.1 otherwise). Everything else gets no CORS headers.
+  // from reaching 127.0.0.1 otherwise). CORS is scoped to chrome-extension:// origins
+  // (NOT `*`) and the PNA grant + custom-header allowance ride along only for those —
+  // so a public web origin's preflight is refused and Chrome blocks its actual request.
+  // Everything else gets no CORS headers.
+  const reqOrigin = req.headers.origin || '';
+  const isExtOrigin = reqOrigin.startsWith('chrome-extension://');
   if (isExt) {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Private-Network', 'true');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'content-type');
+    if (isExtOrigin) {
+      res.setHeader('Access-Control-Allow-Origin', reqOrigin);
+      res.setHeader('Vary', 'Origin');
+      res.setHeader('Access-Control-Allow-Private-Network', 'true');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'content-type, x-kestrel-ext-token');
+    }
     if (req.method === 'OPTIONS') {
-      res.writeHead(204);
+      // Only answer the preflight for the extension origin; a web page gets no ACAO
+      // header and the browser will reject its actual /ext/* request.
+      res.writeHead(isExtOrigin ? 204 : 403);
       return res.end();
+    }
+    // Authenticate every /ext/* call with the per-session token. The token reaches
+    // the companion via a local file it imports at load time; a web page can't read
+    // that file, so a page-side fetch can never present a valid token. Reject web
+    // origins outright too (the extension's worker presents a chrome-extension://
+    // origin, never an http(s):// one).
+    if (reqOrigin && !isExtOrigin) {
+      return json(403, { ok: false, error: 'cross-origin requests are not allowed on the extension bridge' });
+    }
+    if (state.ext && req.headers['x-kestrel-ext-token'] !== state.ext.token) {
+      return json(401, { ok: false, error: 'missing or invalid x-kestrel-ext-token — reload the Kestrel companion extension so it picks up the current session token' });
     }
   } else if (req.headers.origin) {
     // The control plane is for local programs (the CLI, your scripts) that never
@@ -1434,7 +1516,8 @@ const server = http.createServer((req, res) => {
 
   // Optional shared-secret auth for shared/multi-user hosts. When KES_TOKEN is set,
   // every control-plane request must carry a matching x-kestrel-token header. The
-  // extension bridge (/ext/*) is exempt (localhost long-poll). Off unless KES_TOKEN set.
+  // extension bridge (/ext/*) is exempt (it has its own per-session token, above).
+  // Off unless KES_TOKEN set.
   if (process.env.KES_TOKEN && !isExt && req.headers['x-kestrel-token'] !== process.env.KES_TOKEN) {
     return json(401, { ok: false, error: 'missing or invalid x-kestrel-token (KES_TOKEN is set on the daemon)' });
   }

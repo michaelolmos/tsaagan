@@ -112,7 +112,7 @@ export GROQ_API_KEY=…
 kestrel run goal="go to news.ycombinator.com and report the #1 story title"
 # or run it as a standalone server and POST goals:
 kestrel serve port=39820
-curl -s localhost:39820/goal -d '{"goal":"…","max":16}'
+curl -s localhost:39820/goal -H 'content-type: application/json' -d '{"goal":"…","max":16}'
 ```
 
 ## Verify like you mean it

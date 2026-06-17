@@ -5,7 +5,7 @@
 //
 // Start:  GROQ_API_KEY=... node server.js [port=39820] [mode=fresh] [headless=true]
 //   (or OPENROUTER_API_KEY=... for open-source models — see lib/llm.js)
-// Submit: curl -s localhost:39820/goal -d '{"goal":"...","max":16}'
+// Submit: curl -s localhost:39820/goal -H 'content-type: application/json' -d '{"goal":"...","max":16}'
 //         curl -s localhost:39820/journal
 //         curl -s localhost:39820/health
 
@@ -36,9 +36,29 @@ const server = http.createServer((req, res) => {
     res.writeHead(code, { 'content-type': 'application/json' });
     res.end(JSON.stringify(obj));
   };
+
+  // This server drives a fully autonomous agent against the daemon — in
+  // clone/live/native mode that is your real logged-in browser. It is for local
+  // programs (curl, cron, another app) that never send an Origin header. A browser
+  // ALWAYS sends Origin on a cross-origin fetch, so a web page you happen to be
+  // visiting cannot submit goals (CSRF-style hijack). Reject anything with an Origin.
+  if (req.headers.origin) {
+    return reply(403, { ok: false, error: 'cross-origin requests are not allowed' });
+  }
+
+  // Optional shared-secret auth for shared/multi-user hosts. When KES_TOKEN is set,
+  // every request must carry a matching x-kestrel-token header. Off unless KES_TOKEN set.
+  if (process.env.KES_TOKEN && req.headers['x-kestrel-token'] !== process.env.KES_TOKEN) {
+    return reply(401, { ok: false, error: 'missing or invalid x-kestrel-token (KES_TOKEN is set)' });
+  }
+
   if (req.method === 'GET' && req.url === '/health') return reply(200, { ok: true, busy, daemonPort: DAEMON_PORT });
   if (req.method === 'GET' && req.url === '/journal') return reply(200, { ok: true, runs: recentJournal(10) });
   if (req.method === 'POST' && req.url === '/goal') {
+    // Require an explicit JSON content type so a CORS "simple request"
+    // (text/plain POST carrying a JSON string) can't reach this handler.
+    const ct = String(req.headers['content-type'] || '').split(';')[0].trim().toLowerCase();
+    if (ct !== 'application/json') return reply(415, { ok: false, error: 'content-type must be application/json' });
     let body = '';
     let tooBig = false;
     req.on('data', (c) => {

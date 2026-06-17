@@ -22,9 +22,11 @@ import os from 'node:os';
 const PLATFORM = process.platform; // 'darwin' | 'linux' | 'win32'
 const MEM_DIR = path.join(os.homedir(), '.kestrel', 'memory');
 
-function sh(cmd, args, input) {
+function sh(cmd, args, input, env) {
   return new Promise((resolve, reject) => {
-    const p = execFile(cmd, args, { timeout: 20000, maxBuffer: 8 * 1024 * 1024 }, (err, stdout) =>
+    const opts = { timeout: 20000, maxBuffer: 8 * 1024 * 1024 };
+    if (env) opts.env = { ...process.env, ...env };
+    const p = execFile(cmd, args, opts, (err, stdout) =>
       err ? reject(err) : resolve(stdout)
     );
     if (input != null) {
@@ -34,7 +36,9 @@ function sh(cmd, args, input) {
   });
 }
 const osa = (s) => sh('osascript', ['-e', s]);
-const ps = (s) => sh('powershell', ['-NoProfile', '-Command', s]);
+// String paths/values are passed via $env:* (never string-interpolated into the
+// script) so a value containing a quote/apostrophe can't break the PS literal.
+const ps = (s, input, env) => sh('powershell', ['-NoProfile', '-Command', s], input, env);
 async function which(bin) {
   try {
     const cmd = PLATFORM === 'win32' ? 'where' : 'which';
@@ -87,10 +91,36 @@ tell application "Google Chrome" to execute active tab of ${winRef()} javascript
   }
 }
 async function setURL(url) {
+  // Navigation is web-only: reject anything that isn't http(s) so a `goto` target can't
+  // be a local/UNC executable (Start-Process on win32) or a file:/custom-scheme handler.
+  let parsed;
+  try { parsed = new URL(String(url)); } catch { throw new Error(`goto: invalid URL ${JSON.stringify(url)}`); }
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:')
+    throw new Error(`goto: only http(s) URLs are allowed (got ${parsed.protocol})`);
   if (PLATFORM === 'darwin')
     return osa(`tell application "Google Chrome" to set URL of active tab of ${winRef()} to ${JSON.stringify(url)}`);
   if (PLATFORM === 'linux') return sh('xdg-open', [url]);
   if (PLATFORM === 'win32') return sh('powershell', ['-NoProfile', '-Command', 'Start-Process $args[0]', url]);
+}
+// True only when Chrome is the frontmost app AND its front window has a sheet
+// (the macOS Open/Go-to-Folder panel renders as a sheet). Used to FAIL CLOSED in
+// upload_file so path-paste + confirming Return(s) are never delivered to the web
+// page or another app when no file dialog is actually open & key-focused. Any
+// System Events error → false (treat "can't prove it's open" as "not open").
+async function fileOpenSheetVisible() {
+  if (PLATFORM !== 'darwin') return false;
+  try {
+    const r = (await osa(
+      `tell application "System Events" to tell process "Google Chrome"
+  if not frontmost then return "false"
+  if (count of windows) is 0 then return "false"
+  return (exists sheet 1 of window 1) as text
+end tell`
+    )).trim();
+    return r === 'true';
+  } catch {
+    return false;
+  }
 }
 async function activateBrowser() {
   if (PLATFORM === 'darwin') {
@@ -178,8 +208,12 @@ async function screenshot(out) {
     }
     throw new Error('no screenshot tool (install grim/scrot/imagemagick)');
   } else if (PLATFORM === 'win32') {
+    // Path is bound via $env:KES_SHOT (never interpolated) so a quote/apostrophe in
+    // the caller-supplied output path can't break the PS literal and inject commands.
     await ps(
-      `Add-Type -AssemblyName System.Windows.Forms,System.Drawing;$b=[System.Windows.Forms.SystemInformation]::VirtualScreen;$bmp=New-Object Drawing.Bitmap $b.Width,$b.Height;$g=[Drawing.Graphics]::FromImage($bmp);$g.CopyFromScreen($b.Location,[Drawing.Point]::Empty,$b.Size);$bmp.Save('${out}')`
+      `Add-Type -AssemblyName System.Windows.Forms,System.Drawing;$b=[System.Windows.Forms.SystemInformation]::VirtualScreen;$bmp=New-Object Drawing.Bitmap $b.Width,$b.Height;$g=[Drawing.Graphics]::FromImage($bmp);$g.CopyFromScreen($b.Location,[Drawing.Point]::Empty,$b.Size);$bmp.Save($env:KES_SHOT)`,
+      null,
+      { KES_SHOT: String(out) }
     );
   }
 }
@@ -373,13 +407,27 @@ export function makeNativeActions(state) {
       if (!filePath) return { ok: false, error: 'path= (absolute file path) is required' };
       await activateBrowser();
       await new Promise((r) => setTimeout(r, 300));
+      // FAIL CLOSED: the keystrokes below (path paste + Return(s)) are real OS-level
+      // and go to whatever has focus. If no Open panel is frontmost (click missed,
+      // custom/JS picker, slow dialog, focus elsewhere) the confirming Return would
+      // hit the web page (submit a form / activate a focused control) or another app.
+      // Abort unless we can prove Chrome's Open dialog is open & key-focused.
+      if (!(await fileOpenSheetVisible()))
+        return { ok: false, error: 'upload_file: no macOS Open dialog detected on the front Chrome window — click the page upload control first (and ensure it opens the native file picker, not a custom one) before calling upload_file' };
       // key code 5 = G; Cmd+Shift+G opens "Go to Folder" in the Open dialog.
       await osa('tell application "System Events" to key code 5 using {command down, shift down}');
       await new Promise((r) => setTimeout(r, 500)); // let the Go-to sheet animate in
       await paste(filePath); // clipboard paste avoids keyboard-layout issues with paths
       await new Promise((r) => setTimeout(r, 300));
+      // Re-verify the dialog is still frontmost before the FIRST Return (resolve path).
+      if (!(await fileOpenSheetVisible()))
+        return { ok: false, error: 'upload_file: Open dialog lost focus before path navigation — aborted to avoid sending Return to the page/another app' };
       await pressKey('return'); // navigate to / resolve the path
       await new Promise((r) => setTimeout(r, 600));
+      // Re-verify focus AGAIN before the CONFIRMING Return — this is the keystroke
+      // that, if misdelivered, could activate a consequential page default action.
+      if (!(await fileOpenSheetVisible()))
+        return { ok: false, error: 'upload_file: Open dialog lost focus before confirm — aborted before the confirming Return to avoid triggering a page action' };
       await pressKey('return'); // confirm the selection / Open
       await new Promise((r) => setTimeout(r, 800));
       return { ok: true, uploaded: filePath };

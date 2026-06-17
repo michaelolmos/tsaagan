@@ -1,5 +1,7 @@
 node_modules/
 .kestrel/
+# generated per-session extension bridge token (never commit)
+extension/ext-token.js
 *.log
 .DS_Store
 /tmp/
