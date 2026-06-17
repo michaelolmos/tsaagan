@@ -5,7 +5,8 @@
 <p align="center">
   <em>Created by Michael Olmos · MIT licensed</em><br><br>
   <img alt="license: MIT" src="https://img.shields.io/badge/license-MIT-blue.svg">
-  <img alt="node >= 20" src="https://img.shields.io/badge/node-%E2%89%A5%2020-3c873a.svg">
+  <img alt="node 20+" src="https://img.shields.io/badge/node-20%2B-3c873a.svg">
+  <img alt="MCP server" src="https://img.shields.io/badge/MCP-server-8b5cf6.svg">
   <img alt="engine: Playwright + native" src="https://img.shields.io/badge/engine-Playwright%20%2B%20native-b5532a.svg">
   <img alt="platforms" src="https://img.shields.io/badge/macOS%20%C2%B7%20Linux%20%C2%B7%20Windows-lightgrey.svg">
 </p>
@@ -218,7 +219,7 @@ other tool lacks — structural proof that each action worked — is Kestrel's c
 
 ![Kestrel architecture](docs/architecture.svg)
 
-Kestrel is **one engine with three wrappers**:
+Kestrel is **one engine you can drive several ways**:
 
 - **The tool** — a CLI (`kestrel.js`) talking to a background **daemon** that holds a
   single persistent Playwright page. This is the engine; everything else wraps it.
@@ -227,6 +228,10 @@ Kestrel is **one engine with three wrappers**:
   and drives Kestrel step by step. (A ready-made skill for Claude Code is included.)
 - **As an agent** — a dispatchable worker that bundles the skill + the tool, so you
   can hand it a goal and it runs the loop on its own.
+- **As an MCP server or SDK** — `kestrel mcp` exposes the verify-first verbs to Claude
+  Desktop / Claude Code / Cursor, and the **JS + Python SDKs** call the same daemon
+  directly. (See [Use it from Claude/Cursor (MCP)](#use-it-from-claude-desktop-claude-code-or-cursor-mcp)
+  and [Use it from your own code](#use-it-from-your-own-code-js--python-sdk) above.)
 
 **Who is the "brain"?** Whatever drives it:
 

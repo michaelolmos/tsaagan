@@ -18,12 +18,12 @@
 
   <!-- KESTREL container -->
   <rect x="50" y="224" width="880" height="270" rx="14" fill="#f6f8fa" stroke="#b5532a" stroke-width="2"/>
-  <text x="72" y="252" font-size="16" font-weight="700" fill="#b5532a">KESTREL — the hands (a tool: CLI + background daemon)</text>
+  <text x="72" y="252" font-size="16" font-weight="700" fill="#b5532a">KESTREL — the hands (CLI · MCP · SDK → background daemon)</text>
 
   <!-- CLI -> Daemon -->
   <rect x="80" y="270" width="180" height="56" rx="10" fill="#ffffff" stroke="#d0d7de" stroke-width="1.5"/>
-  <text x="170" y="294" text-anchor="middle" font-size="14" font-weight="600" fill="#1a1a2e">CLI</text>
-  <text x="170" y="313" text-anchor="middle" font-size="12" fill="#666">kestrel.js · &lt;command&gt;</text>
+  <text x="170" y="290" text-anchor="middle" font-size="13.5" font-weight="600" fill="#1a1a2e">CLI · MCP · SDK</text>
+  <text x="170" y="308" text-anchor="middle" font-size="10.5" fill="#666">kestrel · Claude/Cursor · JS+Py</text>
 
   <line x1="260" y1="298" x2="312" y2="298" stroke="#9aa4b2" stroke-width="2"/>
   <polygon points="320,298 308,292 308,304" fill="#9aa4b2"/>
@@ -79,6 +79,6 @@
   <text x="598" y="567" text-anchor="middle" font-size="14" font-weight="600" fill="#1a1a2e">The Web</text>
 
   <!-- footer: three ways to use it -->
-  <text x="40" y="628" font-size="13" fill="#1a1a2e"><tspan font-weight="700">Same engine, three wrappers:</tspan>  <tspan fill="#b5532a" font-weight="600">Tool</tspan> = the CLI + daemon  ·  <tspan fill="#b5532a" font-weight="600">Skill</tspan> = the method that teaches the AI to drive it  ·  <tspan fill="#b5532a" font-weight="600">Agent</tspan> = a dispatchable worker that runs it alone.</text>
+  <text x="40" y="628" font-size="12.5" fill="#1a1a2e"><tspan font-weight="700">Drive it your way:</tspan>  <tspan fill="#b5532a" font-weight="600">CLI</tspan> · <tspan fill="#b5532a" font-weight="600">MCP server</tspan> (Claude/Cursor) · <tspan fill="#b5532a" font-weight="600">JS + Python SDK</tspan> · a <tspan fill="#b5532a" font-weight="600">Skill</tspan> an AI follows · a dispatchable <tspan fill="#b5532a" font-weight="600">Agent</tspan> — all on one daemon.</text>
   <text x="40" y="648" font-size="12" fill="#555">Brain-agnostic: no Anthropic API key required — when Claude Code drives it, your Claude plan is the brain. Autonomous mode uses Groq.</text>
 </svg>
