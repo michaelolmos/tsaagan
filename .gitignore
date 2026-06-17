@@ -1,5 +1,5 @@
 node_modules/
-.kestrel/
+.tsaagan/
 # generated per-session extension bridge token (never commit)
 extension/ext-token.js
 *.log

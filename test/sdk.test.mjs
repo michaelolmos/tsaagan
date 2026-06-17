@@ -4,12 +4,12 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert';
-import { Kestrel, createKestrel } from '../sdk/index.mjs';
+import { Tsaagan, createTsaagan } from '../sdk/index.mjs';
 
 const DEAD_PORT = 39899; // assumed not in use during tests
 
-test('Kestrel exposes the verify-first API surface', () => {
-  const k = new Kestrel({ port: DEAD_PORT, autoStart: false });
+test('Tsaagan exposes the verify-first API surface', () => {
+  const k = new Tsaagan({ port: DEAD_PORT, autoStart: false });
   const methods = [
     'status', 'snapshot', 'extract', 'consoleLog', 'network', 'recall',
     'goto', 'back', 'scroll', 'waitFor',
@@ -17,16 +17,16 @@ test('Kestrel exposes the verify-first API surface', () => {
     'tabs', 'switchTab', 'newTab', 'closeTab', 'stop', 'raw', 'ready', 'alive', 'close',
   ];
   for (const m of methods) assert.equal(typeof k[m], 'function', `missing method ${m}`);
-  assert.equal(typeof createKestrel, 'function');
+  assert.equal(typeof createTsaagan, 'function');
   assert.equal(k.port, DEAD_PORT);
 });
 
 test('alive() is false when no daemon is listening', async () => {
-  const k = new Kestrel({ port: DEAD_PORT, autoStart: false });
+  const k = new Tsaagan({ port: DEAD_PORT, autoStart: false });
   assert.equal(await k.alive(), false);
 });
 
 test('ready() rejects when autoStart is off and no daemon is running', async () => {
-  const k = new Kestrel({ port: DEAD_PORT, autoStart: false });
-  await assert.rejects(() => k.ready(), /no Kestrel daemon/);
+  const k = new Tsaagan({ port: DEAD_PORT, autoStart: false });
+  await assert.rejects(() => k.ready(), /no Tsaagan daemon/);
 });

@@ -1,7 +1,7 @@
 # API layer — skip the browser when a site has an API
 
 The fastest and most reliable way to do a web task is often **not a browser at
-all** — it's the site's official API. Kestrel's API layer lets your agent prefer
+all** — it's the site's official API. Tsaagan's API layer lets your agent prefer
 that path, with keys stored securely and even **set up for you by the browser
 layers**.
 
@@ -13,22 +13,22 @@ in env, never a plaintext file. A small index file records *which* services have
 (names only, never the secret).
 
 ```bash
-kestrel vault set service=openai secret="sk-…"        # stored in Keychain
-kestrel vault set service=github account=work secret="ghp_…"
-kestrel vault list                                     # { openai:[default], github:[work] } — names only
-kestrel vault get service=openai                       # prints the secret (your explicit request)
-kestrel vault delete service=openai
+tsaagan vault set service=openai secret="sk-…"        # stored in Keychain
+tsaagan vault set service=github account=work secret="ghp_…"
+tsaagan vault list                                     # { openai:[default], github:[work] } — names only
+tsaagan vault get service=openai                       # prints the secret (your explicit request)
+tsaagan vault delete service=openai
 ```
 
 ## Authenticated calls
 
 ```bash
-kestrel api providers                                  # known services
-kestrel api detect=https://api.openai.com/v1/models    # is there a known API for this host?
-kestrel api service=openai path=/models                # GET with the stored key + provider defaults
-kestrel api service=github path=/user
-kestrel api service=stripe path=/customers method=GET
-kestrel api url=https://any.api/endpoint service=openai method=POST body='{"x":1}'
+tsaagan api providers                                  # known services
+tsaagan api detect=https://api.openai.com/v1/models    # is there a known API for this host?
+tsaagan api service=openai path=/models                # GET with the stored key + provider defaults
+tsaagan api service=github path=/user
+tsaagan api service=stripe path=/customers method=GET
+tsaagan api url=https://any.api/endpoint service=openai method=POST body='{"x":1}'
 ```
 
 The provider registry (`lib/providers.json`) knows each service's base URL + auth
@@ -36,13 +36,13 @@ header format (Bearer / x-api-key / extra headers). Add your own by editing it.
 
 ## Browser-bootstrapped key setup (the elegant part)
 
-The browser layer **bootstraps** the API layer. When Kestrel lands on a site that
+The browser layer **bootstraps** the API layer. When Tsaagan lands on a site that
 offers an API, the agent can:
 
-1. `kestrel api detect=<current url>` → find the key-creation URL.
+1. `tsaagan api detect=<current url>` → find the key-creation URL.
 2. Drive the browser to that page (you're already logged in), create a key, and read
    it off the page.
-3. `kestrel vault set service=<x> secret=<the key>` → stored in Keychain.
+3. `tsaagan vault set service=<x> secret=<the key>` → stored in Keychain.
 4. Tell you: *"this site has an API — I set it up; future tasks will use it directly."*
 
 From then on, that task runs through the API (Layer 1) instead of the UI.

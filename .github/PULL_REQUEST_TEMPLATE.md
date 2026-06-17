@@ -1,4 +1,4 @@
-<!-- Thanks for contributing to Kestrel! -->
+<!-- Thanks for contributing to Tsaagan! -->
 
 ## What & why
 <!-- What does this change, and why? Link any issue. -->

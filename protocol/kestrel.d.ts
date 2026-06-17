@@ -1,4 +1,4 @@
-export type KestrelAction =
+export type TsaaganAction =
   | 'status'
   | 'goto'
   | 'snapshot'
@@ -56,7 +56,7 @@ export interface VerifyBlock {
   [key: string]: unknown;
 }
 
-export interface KestrelResponse {
+export interface TsaaganResponse {
   ok: boolean;
   error?: string;
   verify?: VerifyBlock;
@@ -103,7 +103,7 @@ export interface ReportArgs {
   limit?: number;
 }
 
-export type KestrelRequest =
+export type TsaaganRequest =
   | { action: 'goto'; args: GotoArgs }
   | { action: 'click'; args: ClickArgs }
   | { action: 'type'; args: TypeArgs }
@@ -113,4 +113,4 @@ export type KestrelRequest =
   | { action: 'record_stop'; args?: RecordStopArgs }
   | { action: 'replay'; args: ReplayArgs }
   | { action: 'report'; args?: ReportArgs }
-  | { action: KestrelAction; args?: Record<string, unknown> };
+  | { action: TsaaganAction; args?: Record<string, unknown> };

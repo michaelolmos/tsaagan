@@ -1,6 +1,6 @@
 ---
 name: Feature request
-about: Suggest an idea for Kestrel
+about: Suggest an idea for Tsaagan
 title: "[feat] "
 labels: enhancement
 ---
@@ -15,4 +15,4 @@ labels: enhancement
 
 **Scope / responsibility check**
 - [ ] This isn't primarily for defeating CAPTCHAs at scale or violating site ToS
-<!-- See SECURITY.md — Kestrel stays on the right side of responsible automation. -->
+<!-- See SECURITY.md — Tsaagan stays on the right side of responsible automation. -->

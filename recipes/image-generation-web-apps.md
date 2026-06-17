@@ -1,14 +1,14 @@
 # Recipe — Drive a browser image generator (Google Flow / Nano Banana Pro, ImageFX, etc.)
 
-> Added 2026-06-14 from the wear2am t-shirt pipeline. Kestrel use-case: batch-generate
+> Added 2026-06-14 from the wear2am t-shirt pipeline. Tsaagan use-case: batch-generate
 > design/product images from a creative **web app that has no usable public API** (or
 > whose web-only model is better than any API), by driving the real logged-in browser
 > like a human.
 
-## Why Kestrel for this
+## Why Tsaagan for this
 The best image models are often locked inside a web app behind a Google login and a
 dynamic, canvas-heavy UI — **Google Flow (Nano Banana Pro / Imagen)**, ImageFX,
-Midjourney web. `WebFetch`/HTTP can't touch them. This is exactly Kestrel's lane:
+Midjourney web. `WebFetch`/HTTP can't touch them. This is exactly Tsaagan's lane:
 observe → act → verify → self-heal against a real UI, in the user's real session.
 
 ## The flow (observe → act → verify, looped per prompt)

@@ -10,12 +10,12 @@ labels: bug
 
 **Repro**
 ```bash
-# the kestrel commands you ran
+# the tsaagan commands you ran
 ```
 
 **Output / verify block**
 ```json
-// paste the JSON Kestrel returned (esp. the `verify` block) and ~/.kestrel/daemon.log if relevant
+// paste the JSON Tsaagan returned (esp. the `verify` block) and ~/.tsaagan/daemon.log if relevant
 ```
 
 **Environment**
@@ -23,7 +23,7 @@ labels: bug
 - Mode: <!-- fresh / clone / live / native -->
 - Channel: <!-- chrome / chromium -->
 - Node version:
-- Kestrel version / commit:
+- Tsaagan version / commit:
 
 **Site type** (if relevant)
 <!-- public / authenticated dashboard / canvas UI / site that ignores synthetic input -->

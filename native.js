@@ -1,4 +1,4 @@
-// kestrel NATIVE mode — drive the user's REAL browser with NO debug port and NO
+// tsaagan NATIVE mode — drive the user's REAL browser with NO debug port and NO
 // CDP/Playwright. This is the most reliable path on strict sites that ignore
 // synthetic input, because input is REAL OS-level mouse/keyboard → DOM events are
 // isTrusted=true, which CDP/JS-dispatched input can never produce.
@@ -20,7 +20,7 @@ import path from 'node:path';
 import os from 'node:os';
 
 const PLATFORM = process.platform; // 'darwin' | 'linux' | 'win32'
-const MEM_DIR = path.join(os.homedir(), '.kestrel', 'memory');
+const MEM_DIR = path.join(os.homedir(), '.tsaagan', 'memory');
 
 function sh(cmd, args, input, env) {
   return new Promise((resolve, reject) => {
@@ -80,7 +80,7 @@ async function raiseWindow() {
 async function execJS(js) {
   if (PLATFORM !== 'darwin') throw new Error('AppleScript DOM read is macOS-only; use screenshot+vision+click_xy');
   // Per-call temp file so two concurrent calls can't overwrite each other's JS.
-  const tmp = path.join(os.tmpdir(), `kestrel-native-${process.pid}-${Date.now()}-${Math.floor(Math.random() * 1e6)}.js`);
+  const tmp = path.join(os.tmpdir(), `tsaagan-native-${process.pid}-${Date.now()}-${Math.floor(Math.random() * 1e6)}.js`);
   fs.writeFileSync(tmp, js, 'utf8');
   try {
     const script = `set theJS to (read POSIX file ${JSON.stringify(tmp)} as «class utf8»)
@@ -208,12 +208,12 @@ async function screenshot(out) {
     }
     throw new Error('no screenshot tool (install grim/scrot/imagemagick)');
   } else if (PLATFORM === 'win32') {
-    // Path is bound via $env:KES_SHOT (never interpolated) so a quote/apostrophe in
+    // Path is bound via $env:TSG_SHOT (never interpolated) so a quote/apostrophe in
     // the caller-supplied output path can't break the PS literal and inject commands.
     await ps(
-      `Add-Type -AssemblyName System.Windows.Forms,System.Drawing;$b=[System.Windows.Forms.SystemInformation]::VirtualScreen;$bmp=New-Object Drawing.Bitmap $b.Width,$b.Height;$g=[Drawing.Graphics]::FromImage($bmp);$g.CopyFromScreen($b.Location,[Drawing.Point]::Empty,$b.Size);$bmp.Save($env:KES_SHOT)`,
+      `Add-Type -AssemblyName System.Windows.Forms,System.Drawing;$b=[System.Windows.Forms.SystemInformation]::VirtualScreen;$bmp=New-Object Drawing.Bitmap $b.Width,$b.Height;$g=[Drawing.Graphics]::FromImage($bmp);$g.CopyFromScreen($b.Location,[Drawing.Point]::Empty,$b.Size);$bmp.Save($env:TSG_SHOT)`,
       null,
-      { KES_SHOT: String(out) }
+      { TSG_SHOT: String(out) }
     );
   }
 }
@@ -331,7 +331,7 @@ export function makeNativeActions(state) {
     async snapshot() {
       const d = await perceive();
       if (!hasDom) {
-        const shot = path.join(os.tmpdir(), `kestrel-native-${Date.now()}.png`);
+        const shot = path.join(os.tmpdir(), `tsaagan-native-${Date.now()}.png`);
         await screenshot(shot).catch(() => {});
         return { ok: true, mode: 'native', domPerception: false, screenshot: shot, note: 'No DOM read on this platform — use vision + click_xy x= y=.' };
       }
@@ -393,7 +393,7 @@ export function makeNativeActions(state) {
       return { ok: true, value: await execJS(js) };
     },
     async screenshot({ path: p }) {
-      const out = p || path.join(os.tmpdir(), `kestrel-native-${Date.now()}.png`);
+      const out = p || path.join(os.tmpdir(), `tsaagan-native-${Date.now()}.png`);
       await screenshot(out);
       return { ok: true, path: out };
     },

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// kestrel capability benchmark. Runs a task suite autonomously and scores
+// tsaagan capability benchmark. Runs a task suite autonomously and scores
 // success + self-heal rate + steps + time. Plus a deterministic capability
 // matrix (self-heal, vision Set-of-Marks, structural verify).
 //
@@ -18,11 +18,11 @@ for (const item of process.argv.slice(2)) {
   const m = item.match(/^([^=]+)=([\s\S]*)$/);
   if (m) argv[m[1]] = m[2];
 }
-const PORT = parseInt(process.env.KES_PORT || '39817', 10);
+const PORT = parseInt(process.env.TSG_PORT || '39817', 10);
 const tasksFile = argv.tasks || path.join(__dirname, 'bench', 'tasks.json');
 
 if (!hasLLM()) {
-  console.error('no LLM key — set GROQ_API_KEY or OPENROUTER_API_KEY (or KES_LLM_BASE_URL for a custom endpoint)');
+  console.error('no LLM key — set GROQ_API_KEY or OPENROUTER_API_KEY (or TSG_LLM_BASE_URL for a custom endpoint)');
   process.exit(1);
 }
 

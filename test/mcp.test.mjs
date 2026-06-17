@@ -44,7 +44,7 @@ test('initialize returns protocol version and server info', async () => {
   const r = await session([{ id: 1, method: 'initialize', params: { protocolVersion: '2025-06-18', capabilities: {} } }]);
   const res = r.get(1).result;
   assert.equal(res.protocolVersion, '2025-06-18');
-  assert.equal(res.serverInfo.name, 'kestrel');
+  assert.equal(res.serverInfo.name, 'tsaagan');
   assert.ok(res.capabilities.tools, 'declares tools capability');
 });
 
@@ -56,7 +56,7 @@ test('tools/list returns the verify-first tool catalog', async () => {
   const tools = r.get(2).result.tools;
   assert.ok(Array.isArray(tools) && tools.length >= 20, `expected 20+ tools, got ${tools.length}`);
   const names = tools.map((t) => t.name);
-  for (const must of ['kestrel_navigate', 'kestrel_snapshot', 'kestrel_click', 'kestrel_fill_form', 'kestrel_network']) {
+  for (const must of ['tsaagan_navigate', 'tsaagan_snapshot', 'tsaagan_click', 'tsaagan_fill_form', 'tsaagan_network']) {
     assert.ok(names.includes(must), `missing tool ${must}`);
   }
   // Every tool must be self-describing for the host.
@@ -65,10 +65,10 @@ test('tools/list returns the verify-first tool catalog', async () => {
     assert.equal(t.inputSchema.type, 'object');
   }
   // Mutating tools are flagged destructive so hosts can gate/confirm them.
-  const click = tools.find((t) => t.name === 'kestrel_click');
+  const click = tools.find((t) => t.name === 'tsaagan_click');
   assert.equal(click.annotations.destructiveHint, true);
   // Read-only tools are flagged so hosts can parallelize them.
-  const snap = tools.find((t) => t.name === 'kestrel_snapshot');
+  const snap = tools.find((t) => t.name === 'tsaagan_snapshot');
   assert.equal(snap.annotations.readOnlyHint, true);
 });
 

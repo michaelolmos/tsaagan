@@ -1,10 +1,10 @@
 #!/usr/bin/env node
-// kestrel thin client. Usage:
-//   kestrel start [mode=fresh|clone|live] [port=39817] [headless=true]
-//   kestrel <action> [key=value ...]   e.g.  kestrel goto url=https://example.com
-//   kestrel snapshot                   kestrel click ref=e5
-//   kestrel type ref=e3 text="hello" submit=true
-//   kestrel stop
+// tsaagan thin client. Usage:
+//   tsaagan start [mode=fresh|clone|live] [port=39817] [headless=true]
+//   tsaagan <action> [key=value ...]   e.g.  tsaagan goto url=https://example.com
+//   tsaagan snapshot                   tsaagan click ref=e5
+//   tsaagan type ref=e3 text="hello" submit=true
+//   tsaagan stop
 //
 // Every non-start command POSTs {action,args} to the daemon and prints JSON.
 
@@ -35,10 +35,10 @@ function parseArgs(list) {
 }
 
 const args = parseArgs(rest);
-const PORT = parseInt(process.env.KES_PORT || args.port || '39817', 10);
+const PORT = parseInt(process.env.TSG_PORT || args.port || '39817', 10);
 const URL = `http://127.0.0.1:${PORT}`;
 
-const AUTH = process.env.KES_TOKEN ? { 'x-kestrel-token': process.env.KES_TOKEN } : {};
+const AUTH = process.env.TSG_TOKEN ? { 'x-tsaagan-token': process.env.TSG_TOKEN } : {};
 async function send(action, a) {
   const res = await fetch(`${URL}/`, {
     method: 'POST',
@@ -118,11 +118,11 @@ async function runDoctor() {
   let daemon = null;
   try {
     daemon = await send('status', {});
-    checks.push(check(daemon.ok ? 'pass' : 'warn', 'daemon', daemon.ok ? `running on ${URL}` : 'daemon returned a non-ok status', 'Run: node kestrel.js start'));
+    checks.push(check(daemon.ok ? 'pass' : 'warn', 'daemon', daemon.ok ? `running on ${URL}` : 'daemon returned a non-ok status', 'Run: node tsaagan.js start'));
   } catch {
-    checks.push(check('warn', 'daemon', `no daemon reachable on ${URL}`, 'Run: node kestrel.js start'));
+    checks.push(check('warn', 'daemon', `no daemon reachable on ${URL}`, 'Run: node tsaagan.js start'));
   }
-  checks.push(check(process.env.KES_TOKEN ? 'pass' : 'warn', 'control-plane token', process.env.KES_TOKEN ? 'KES_TOKEN is set' : 'KES_TOKEN is not set', 'Set KES_TOKEN on shared or multi-user machines.'));
+  checks.push(check(process.env.TSG_TOKEN ? 'pass' : 'warn', 'control-plane token', process.env.TSG_TOKEN ? 'TSG_TOKEN is set' : 'TSG_TOKEN is not set', 'Set TSG_TOKEN on shared or multi-user machines.'));
   const failures = checks.filter((c) => c.status === 'fail').length;
   const warnings = checks.filter((c) => c.status === 'warn').length;
   return { ok: failures === 0, checks, summary: { failures, warnings }, daemon };
@@ -133,7 +133,7 @@ if (cmd === 'start') {
     print({ ok: true, already: true, note: 'daemon already running', port: PORT });
     process.exit(0);
   }
-  const logDir = path.join(os.homedir(), '.kestrel');
+  const logDir = path.join(os.homedir(), '.tsaagan');
   fs.mkdirSync(logDir, { recursive: true });
   const log = fs.openSync(path.join(logDir, 'daemon.log'), 'a');
   const dArgs = [path.join(__dirname, 'daemon.js'), `--port=${PORT}`, `--mode=${args.mode || 'fresh'}`];
@@ -154,7 +154,7 @@ if (cmd === 'start') {
       process.exit(0);
     }
   }
-  print({ ok: false, error: 'daemon did not become ready in time; see ~/.kestrel/daemon.log' });
+  print({ ok: false, error: 'daemon did not become ready in time; see ~/.tsaagan/daemon.log' });
   process.exit(1);
 } else if (cmd === 'run') {
   // Delegate to the autonomous runner (Groq brain), streaming its output.
@@ -165,7 +165,7 @@ if (cmd === 'start') {
   child.on('exit', (code) => process.exit(code || 0));
 } else if (cmd === 'serve') {
   // Start the standalone agent server (detached). Hand it goals via HTTP.
-  const logDir = path.join(os.homedir(), '.kestrel');
+  const logDir = path.join(os.homedir(), '.tsaagan');
   fs.mkdirSync(logDir, { recursive: true });
   const log = fs.openSync(path.join(logDir, 'server.log'), 'a');
   const child = spawn('node', [path.join(__dirname, 'server.js'), ...rest], {
@@ -176,13 +176,13 @@ if (cmd === 'start') {
   child.unref();
   print({ ok: true, started: 'agent server', log: path.join(logDir, 'server.log'), hint: 'POST /goal to it' });
 } else if (cmd === 'mcp') {
-  // Model Context Protocol server over stdio — exposes Kestrel's verify-first
+  // Model Context Protocol server over stdio — exposes Tsaagan's verify-first
   // browser control to Claude Desktop / Claude Code / Cursor / any MCP host.
   // Takes over stdin/stdout for JSON-RPC; do not print() here.
   const m = await import('./mcp/server.mjs');
   m.start();
 } else if (cmd === 'journal') {
-  const f = path.join(os.homedir(), '.kestrel', 'agent', 'journal.jsonl');
+  const f = path.join(os.homedir(), '.tsaagan', 'agent', 'journal.jsonl');
   try {
     const n = parseInt(args.n || '5', 10);
     const runs = fs
@@ -225,7 +225,7 @@ if (cmd === 'start') {
     print(await a.apiCall({ service: args.service, account: args.account, method: args.method, url: args.url, path: args.path, body }));
   }
 } else if (cmd === 'brain') {
-  // Kestrel's evolving memory. brain stats | recall query=.. | advise domain=.. | synthesize domain=..
+  // Tsaagan's evolving memory. brain stats | recall query=.. | advise domain=.. | synthesize domain=..
   const b = await import('./lib/brain.js');
   if (args.synthesize) {
     const reflect = await import('./lib/reflect.js');
@@ -244,7 +244,7 @@ if (cmd === 'start') {
   print({
     ok: true,
     schema: path.join(__dirname, 'protocol', 'actions.schema.json'),
-    types: path.join(__dirname, 'protocol', 'kestrel.d.ts'),
+    types: path.join(__dirname, 'protocol', 'tsaagan.d.ts'),
   });
 } else if (cmd === 'ext-setup') {
   // Launch a browser with the companion extension preloaded and start the daemon
@@ -255,7 +255,7 @@ if (cmd === 'start') {
   //      --load-extension → the extension auto-loads with ZERO manual steps.
   // profile=fresh (default) | clone (copies your logged-in profile — macOS only).
   const extDir = path.join(__dirname, 'extension');
-  const profileDir = path.join(os.homedir(), '.kestrel', 'ext-profile');
+  const profileDir = path.join(os.homedir(), '.tsaagan', 'ext-profile');
   if (args.profile === 'clone' && process.platform === 'darwin') {
     const src = path.join(os.homedir(), 'Library', 'Application Support', 'Google', 'Chrome');
     try {
@@ -270,7 +270,7 @@ if (cmd === 'start') {
   }
   // start the daemon in extension mode (so the extension has something to talk to)
   if (!(await alive())) {
-    const logDir = path.join(os.homedir(), '.kestrel');
+    const logDir = path.join(os.homedir(), '.tsaagan');
     fs.mkdirSync(logDir, { recursive: true });
     const log = fs.openSync(path.join(logDir, 'daemon.log'), 'a');
     spawn('node', [path.join(__dirname, 'daemon.js'), `--port=${PORT}`, '--mode=extension'], { detached: true, stdio: ['ignore', log, log] }).unref();
@@ -302,11 +302,11 @@ if (cmd === 'start') {
   }
   // Stage the daemon's per-session bridge token into the extension dir so the
   // companion service worker can import it (importScripts only reads packaged
-  // files). The daemon wrote it to ~/.kestrel/ext-token.js at startup; copy it in
+  // files). The daemon wrote it to ~/.tsaagan/ext-token.js at startup; copy it in
   // before Chrome loads the extension. Without it the /ext/* bridge rejects the
   // companion's polls with 401.
   try {
-    const tokenSrc = path.join(os.homedir(), '.kestrel', 'ext-token.js');
+    const tokenSrc = path.join(os.homedir(), '.tsaagan', 'ext-token.js');
     fs.copyFileSync(tokenSrc, path.join(extDir, 'ext-token.js'));
   } catch (e) {
     print({ ok: false, error: 'could not stage extension token (is the daemon up?): ' + String(e?.message || e) });
@@ -333,41 +333,41 @@ if (cmd === 'start') {
       browser: flavor,
       note: args.browser === 'chrome'
         ? 'Branded Chrome (137+) blocks --load-extension. One-time manual load:'
-        : 'Extension did not connect — check ~/.kestrel/daemon.log and that the browser window opened.',
+        : 'Extension did not connect — check ~/.tsaagan/daemon.log and that the browser window opened.',
       steps: args.browser === 'chrome'
-        ? ['1) open chrome://extensions and toggle Developer mode (top-right)', `2) Load unpacked → select the FOLDER ${extDir} (highlight it from its parent — don't enter it)`, '3) it auto-connects. Check: kestrel status']
-        : ['retry: node kestrel.js ext-setup', 'or use your own Chrome: node kestrel.js ext-setup browser=chrome'],
+        ? ['1) open chrome://extensions and toggle Developer mode (top-right)', `2) Load unpacked → select the FOLDER ${extDir} (highlight it from its parent — don't enter it)`, '3) it auto-connects. Check: tsaagan status']
+        : ['retry: node tsaagan.js ext-setup', 'or use your own Chrome: node tsaagan.js ext-setup browser=chrome'],
     });
   }
 } else if (!cmd || cmd === 'help' || cmd === '--help') {
   print({
     ok: true,
     usage: [
-      'kestrel start [mode=fresh|clone|live] [port=] [headless=true] [cdp=http://127.0.0.1:9222]',
+      'tsaagan start [mode=fresh|clone|live] [port=] [headless=true] [cdp=http://127.0.0.1:9222]',
       '             [channel=chrome|chromium] [proxy=..] [pace=fast|slow|human] [timezone=..]',
-      'kestrel status | snapshot [full=true] | extract [query=..]',
-      'kestrel goto url=.. [expectText=..]',
-      'kestrel click ref=e5 | click selector=.. | click text=..  [expectText=..] [expectGone=..]',
-      'kestrel type ref=e3 text=".." [submit=true] [expectText=..]',
-      'kestrel select ref=e7 value=".."',
-      'kestrel upload_file ref=e5 | selector=.. path=/abs/a.png[,/abs/b.png]   (native macOS: open the file picker first)',
-      'kestrel press keys="Enter" [expectText=..] | scroll [direction=down|up] [to_text=..]',
-      'kestrel wait_for [text=..|selector=..|url=..|networkidle=true] [timeout=15000]',
-      'kestrel tabs | switch_tab index=1 | new_tab url=.. | close_tab [index=]',
-      'kestrel back | forward | console_log [limit=20] | screenshot [path=..] [fullPage=true]',
-      'kestrel record_start name=.. | record_stop [path=..] | replay path=.. | report [format=json|md]',
-      'kestrel stop',
-      '— diagnostics —     kestrel doctor   |   kestrel protocol',
-      '— extension mode —  kestrel ext-setup [browser=chrome] [profile=clone]   (zero-step trusted input)',
-      '— secrets/API —     kestrel vault set service=.. secret=.. | vault get|list|delete   |   kestrel api service=.. path=/..',
-      '— memory —          kestrel brain [stats] | brain recall query=.. | brain advise domain=.. | advise domain=..',
-      '— autonomous —      kestrel run goal=".." [max=]   |   kestrel serve [port=39820]   |   kestrel journal [n=]   |   kestrel bench',
-      '— MCP (agents) —    kestrel mcp        (stdio MCP server: verify-first browser tools for Claude Desktop / Code / Cursor)',
+      'tsaagan status | snapshot [full=true] | extract [query=..]',
+      'tsaagan goto url=.. [expectText=..]',
+      'tsaagan click ref=e5 | click selector=.. | click text=..  [expectText=..] [expectGone=..]',
+      'tsaagan type ref=e3 text=".." [submit=true] [expectText=..]',
+      'tsaagan select ref=e7 value=".."',
+      'tsaagan upload_file ref=e5 | selector=.. path=/abs/a.png[,/abs/b.png]   (native macOS: open the file picker first)',
+      'tsaagan press keys="Enter" [expectText=..] | scroll [direction=down|up] [to_text=..]',
+      'tsaagan wait_for [text=..|selector=..|url=..|networkidle=true] [timeout=15000]',
+      'tsaagan tabs | switch_tab index=1 | new_tab url=.. | close_tab [index=]',
+      'tsaagan back | forward | console_log [limit=20] | screenshot [path=..] [fullPage=true]',
+      'tsaagan record_start name=.. | record_stop [path=..] | replay path=.. | report [format=json|md]',
+      'tsaagan stop',
+      '— diagnostics —     tsaagan doctor   |   tsaagan protocol',
+      '— extension mode —  tsaagan ext-setup [browser=chrome] [profile=clone]   (zero-step trusted input)',
+      '— secrets/API —     tsaagan vault set service=.. secret=.. | vault get|list|delete   |   tsaagan api service=.. path=/..',
+      '— memory —          tsaagan brain [stats] | brain recall query=.. | brain advise domain=.. | advise domain=..',
+      '— autonomous —      tsaagan run goal=".." [max=]   |   tsaagan serve [port=39820]   |   tsaagan journal [n=]   |   tsaagan bench',
+      '— MCP (agents) —    tsaagan mcp        (stdio MCP server: verify-first browser tools for Claude Desktop / Code / Cursor)',
     ],
   });
 } else {
   if (!(await alive())) {
-    print({ ok: false, error: `no daemon on ${URL}. Run: kestrel start` });
+    print({ ok: false, error: `no daemon on ${URL}. Run: tsaagan start` });
     process.exit(1);
   }
   print(await send(cmd, args));

@@ -1,14 +1,14 @@
 # Reliability: trusted input & correctness
 
-![how Kestrel interacts](reliability.svg)
+![how Tsaagan interacts](reliability.svg)
 
-Kestrel acts on the web the way a person would — real navigation, real clicks and
+Tsaagan acts on the web the way a person would — real navigation, real clicks and
 keystrokes. The point is **reliability for automation you're authorized to run** (your
 own accounts, your team's dashboards, sites whose terms permit it).
 
-> **Responsible use, up front.** Kestrel is a productivity tool. It is **not** for
+> **Responsible use, up front.** Tsaagan is a productivity tool. It is **not** for
 > defeating security, solving CAPTCHAs, evading bans, scraping at abusive volume, or
-> anything that violates a site's Terms of Service. When Kestrel hits a CAPTCHA or an
+> anything that violates a site's Terms of Service. When Tsaagan hits a CAPTCHA or an
 > anti-abuse wall, it **stops and hands control back to you** — by design (see
 > `AGENTS.md`). Use it only where you're permitted to automate.
 
@@ -17,7 +17,7 @@ own accounts, your team's dashboards, sites whose terms permit it).
 A DOM event carries an `isTrusted` flag that is `true` only for genuine user input.
 A lot of well-built sites deliberately ignore *synthetic* clicks and keystrokes for
 their own integrity. If your agent's input is synthetic, those actions **silently do
-nothing** — the form never submits, the button never fires. So Kestrel offers input
+nothing** — the form never submits, the button never fires. So Tsaagan offers input
 paths that produce `isTrusted=true` events, so your authorized actions actually take
 effect. That's the whole reason for the extra modes — correctness, not concealment.
 
@@ -39,8 +39,8 @@ cleanest trusted-input path. See [EXTENSION.md](EXTENSION.md).
 ## Honest limits
 
 The hardest sites (large search/AI platforms) also score **behavior and account risk**,
-and some block automation outright. Kestrel does not try to get past that, and you
+and some block automation outright. Tsaagan does not try to get past that, and you
 shouldn't either — automating a site that forbids it can violate its Terms of Service
 and put your account at risk. Stay within each site's terms, only automate accounts
-you're permitted to, and when Kestrel meets a CAPTCHA or anti-abuse wall, let it do
+you're permitted to, and when Tsaagan meets a CAPTCHA or anti-abuse wall, let it do
 what it's built to do: **stop and hand off to a human.**

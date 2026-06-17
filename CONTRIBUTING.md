@@ -1,12 +1,12 @@
-# Contributing to Kestrel
+# Contributing to Tsaagan
 
-Thanks for your interest! Kestrel is small, dependency-light, and meant to stay
+Thanks for your interest! Tsaagan is small, dependency-light, and meant to stay
 readable. Contributions of all sizes are welcome.
 
 ## Setup
 
 ```bash
-git clone <your-fork> kestrel && cd kestrel
+git clone <your-fork> tsaagan && cd tsaagan
 npm install
 npx playwright install chromium chromium-headless-shell
 npm test
@@ -18,7 +18,7 @@ npm test
 |---|---|
 | `daemon.js` | The engine: persistent Playwright page + all CDP-mode verbs |
 | `native.js` | CDP-free driver (AppleScript / OS-level input), cross-platform input |
-| `kestrel.js` | Thin CLI client |
+| `tsaagan.js` | Thin CLI client |
 | `agent.js` | Autonomous planner→navigator→validator loop + task memory |
 | `run.js` / `server.js` | One-shot run / standalone HTTP goal server |
 | `bench.js` · `test/` | Benchmark · tests |
@@ -36,7 +36,7 @@ npm test
 - **Add a test** for pure logic (see `test/totp.test.mjs`) and, where practical, the
   headless smoke (`test/smoke.test.mjs`).
 - **Be honest in docs.** State the limits plainly — no overselling.
-- **Stay on-mission.** Kestrel is for authorized, productivity automation. Don't add
+- **Stay on-mission.** Tsaagan is for authorized, productivity automation. Don't add
   features whose purpose is to circumvent security, CAPTCHAs, or anti-abuse controls
   (see [ACCEPTABLE_USE.md](ACCEPTABLE_USE.md)).
 
@@ -49,7 +49,7 @@ and record/replay.
 
 ```bash
 npm test                 # unit + headless integration
-node kestrel.js bench    # capability benchmark (needs GROQ_API_KEY for task suite)
+node tsaagan.js bench    # capability benchmark (needs GROQ_API_KEY for task suite)
 ```
 
 ## PRs
@@ -59,6 +59,6 @@ template will prompt you. By contributing you agree your work is MIT-licensed.
 
 ## Responsible use
 
-Kestrel automates a real browser. Don't contribute features whose primary purpose is
+Tsaagan automates a real browser. Don't contribute features whose primary purpose is
 to violate site Terms of Service, defeat CAPTCHAs at scale, or target accounts you
 don't control. See [SECURITY.md](SECURITY.md).

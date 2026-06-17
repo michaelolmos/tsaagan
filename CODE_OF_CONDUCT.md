@@ -2,7 +2,7 @@
 
 ## Our pledge
 
-We want Kestrel to be a welcoming, harassment-free project for everyone, regardless
+We want Tsaagan to be a welcoming, harassment-free project for everyone, regardless
 of background or identity.
 
 ## Our standards

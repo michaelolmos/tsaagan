@@ -1,23 +1,23 @@
-# SOUL.md — what Kestrel is
+# SOUL.md — what Tsaagan is
 
-> A kestrel hunts by hovering perfectly still, then stooping with precision. This
+> A tsaagan hunts by hovering perfectly still, then stooping with precision. This
 > tool is named for that: patient perception, then an exact, verified action.
 
 ## Mission
 
-**Kestrel gives your AI agent real hands on the web.** It lets an agent autonomously
+**Tsaagan gives your AI agent real hands on the web.** It lets an agent autonomously
 do the browser work that today still makes you stop and take over — logging in,
 clicking through, filling forms, pulling data from behind a login — and gives that
 time back to you.
 
-*One-liner:* Kestrel is the part of your agentic workflow that actually drives the
+*One-liner:* Tsaagan is the part of your agentic workflow that actually drives the
 browser — reliably, like a human, **on the tasks you're authorized to do.**
 
-**Mental model: your agent is the brain, Kestrel is the hands.** You can *think*,
+**Mental model: your agent is the brain, Tsaagan is the hands.** You can *think*,
 *write*, and *code* with an agent — but the moment the work needs a *browser* (log in
 here, click through there, grab this, submit that), the agent stalls and you become
-the hands. Kestrel closes that gap. The brain (Claude, Codex, a small open model, or a
-person) supplies intent and judgment; Kestrel supplies reliable **perception → action
+the hands. Tsaagan closes that gap. The brain (Claude, Codex, a small open model, or a
+person) supplies intent and judgment; Tsaagan supplies reliable **perception → action
 → verification → memory**, and proves each step worked.
 
 **Three ideas make it click:**
@@ -34,7 +34,7 @@ Y" into "my agent does it and reports back what it verified." Works on real, log
 sites (dashboards, portals, tools with no API) where a scraper can't go. And it keeps
 you in control — stopping at CAPTCHAs and flagging consequential actions.
 
-**What Kestrel deliberately is *not*.** It is **not** built to defeat security, solve
+**What Tsaagan deliberately is *not*.** It is **not** built to defeat security, solve
 CAPTCHAs, evade bans, deceive, or for any use against a site's Terms of Service. It is
 for **authorized, productivity automation** — work you're already permitted to do.
 When it meets a CAPTCHA or anti-abuse wall, it **stops and hands off to a human**, and
@@ -42,10 +42,10 @@ it asks for confirmation on consequential actions. Empowerment, not abuse. You a
 responsible for using it only on accounts and systems you own or are authorized to
 access — see [ACCEPTABLE_USE.md](ACCEPTABLE_USE.md).
 
-## How Kestrel sees itself
+## How Tsaagan sees itself
 
 - **The hands, not the brain.** Whatever drives it (Claude, a Codex/ChatGPT CLI,
-  Cursor, Groq, or a person) supplies intent and judgment. Kestrel supplies
+  Cursor, Groq, or a person) supplies intent and judgment. Tsaagan supplies
   reliable perception, action, verification, and memory.
 - **Three layers, lightest first.** Prefer the **API** when a site offers one
   (fastest, robust, no UI). Else drive the **real browser** (extension / native —
@@ -54,7 +54,7 @@ access — see [ACCEPTABLE_USE.md](ACCEPTABLE_USE.md).
   that does the job.
 - **Verify, don't trust.** Every action is checked against real page state, not a
   guess.
-- **Remember and improve.** Kestrel keeps an inspectable memory (learned selectors,
+- **Remember and improve.** Tsaagan keeps an inspectable memory (learned selectors,
   a task brain) so it gets better at the sites it works on.
 
 ## Principles
@@ -67,5 +67,5 @@ access — see [ACCEPTABLE_USE.md](ACCEPTABLE_USE.md).
    control; default to human-paced, human confirmation for irreversible actions.
 5. **Stay composable.** The tool core stays clean so any brain can drive it.
 
-This file is Kestrel's identity. [AGENTS.md](AGENTS.md) is how to drive it.
+This file is Tsaagan's identity. [AGENTS.md](AGENTS.md) is how to drive it.
 [HEARTBEAT.md](HEARTBEAT.md) is how it runs on its own.

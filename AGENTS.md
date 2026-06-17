@@ -1,19 +1,19 @@
-# AGENTS.md — how to drive Kestrel
+# AGENTS.md — how to drive Tsaagan
 
 This file tells any AI agent (Claude Code, Codex/ChatGPT CLI, Cursor, etc.) how to
-use Kestrel well. Read [SOUL.md](SOUL.md) for *why*; this is *how*.
+use Tsaagan well. Read [SOUL.md](SOUL.md) for *why*; this is *how*.
 
-`kestrel` = `node kestrel.js`. Every command prints JSON. Mutating actions return a
+`tsaagan` = `node tsaagan.js`. Every command prints JSON. Mutating actions return a
 `verify` block — **read it; don't assume success.**
 
 ## Pick the lightest layer that does the job
 
 1. **API layer first.** If the site has an official API, use it — fastest, robust,
    no UI to drive at all.
-   - `kestrel api detect=<url>` → is there a known API?
-   - `kestrel api service=<x> path=/… method=…` → call it with a stored key.
-   - First time: store the key — `kestrel vault set service=<x> secret=…` (Keychain).
-     Kestrel can even browse the site's developer settings to create the key, then
+   - `tsaagan api detect=<url>` → is there a known API?
+   - `tsaagan api service=<x> path=/… method=…` → call it with a stored key.
+   - First time: store the key — `tsaagan vault set service=<x> secret=…` (Keychain).
+     Tsaagan can even browse the site's developer settings to create the key, then
      `vault set` it (see [docs/API.md](docs/API.md)).
 2. **Real-browser layer** for sites without an API or behind a login:
    - `extension` mode (any OS) — trusted input, viewport coords, no debug port. Best
@@ -27,9 +27,9 @@ use Kestrel well. Read [SOUL.md](SOUL.md) for *why*; this is *how*.
 
 `OBSERVE → THINK → ACT → VERIFY → RECOVER`
 
-1. `kestrel snapshot` — read the accessibility tree; act on stable `[ref=eN]`.
+1. `tsaagan snapshot` — read the accessibility tree; act on stable `[ref=eN]`.
 2. Pick one goal; **≤3 actions before re-observing** (the page changes after action 1).
-3. Act: `kestrel click ref=e5 expectText="…"`, `kestrel type ref=e3 text="…" submit=true`.
+3. Act: `tsaagan click ref=e5 expectText="…"`, `tsaagan type ref=e3 text="…" submit=true`.
    Always pass `expectText=`/`expectGone=` so the step self-verifies.
 4. **Read the `verify` block** (`urlChanged`, `expectTextFound`, `newConsoleErrors`,
    `failedRequests`). That's how you *know* it worked.
@@ -52,9 +52,9 @@ use Kestrel well. Read [SOUL.md](SOUL.md) for *why*; this is *how*.
 
 ## Memory
 
-- Per-site **selectors/notes**: `kestrel remember/recall` (human-editable JSON).
-- The **brain** (evolving episodic memory): `kestrel brain recall query=…` /
-  `kestrel brain` (stats). Kestrel auto-records runs + auto-learns anti-abuse lessons.
+- Per-site **selectors/notes**: `tsaagan remember/recall` (human-editable JSON).
+- The **brain** (evolving episodic memory): `tsaagan brain recall query=…` /
+  `tsaagan brain` (stats). Tsaagan auto-records runs + auto-learns anti-abuse lessons.
 
 ## When done
 

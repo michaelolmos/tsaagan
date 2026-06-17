@@ -1,12 +1,12 @@
 # Benchmark methodology
 
-Kestrel reports benchmarks the way it does everything else: honestly, and with proof.
+Tsaagan reports benchmarks the way it does everything else: honestly, and with proof.
 The browser-agent field has a credibility problem — "everyone claims ~90% on
 WebVoyager," on different (often quietly patched) task subsets, sometimes with manual
 correction of the judge's output. A high number is not the goal here. A *reproducible,
 self-critical* number is.
 
-## What `node kestrel.js bench` runs today
+## What `node tsaagan.js bench` runs today
 
 Two parts:
 
@@ -16,7 +16,7 @@ Two parts:
 2. **Deterministic capability matrix** — three signature capabilities verified directly,
    independent of any LLM:
    - **self-heal** — snapshot a page, invalidate its refs (reload), click a now-stale
-     ref, and confirm Kestrel recovers it.
+     ref, and confirm Tsaagan recovers it.
    - **vision Set-of-Marks** — confirm the visual grounding fallback produces marks.
    - **structural verify** — confirm a navigation returns a `verify` block with
      `expectTextFound === true`.
@@ -48,18 +48,18 @@ we will publish a **WebVoyager** result under a locked, least-gameable protocol:
   override** of judge verdicts.
 - **Report:** pass rate `(passed/total)`, the agent model, the judge model, the exact
   task list, the patch list, and the API cost. Plus a **verified-pass** sub-score —
-  tasks whose success Kestrel's own post-conditions independently confirmed. No other
+  tasks whose success Tsaagan's own post-conditions independently confirmed. No other
   agent publishes that, and it's exactly what verify-first makes possible.
 - **Comparability caveat:** stated up front — scores across tools use different
   WebVoyager subsets and are **not** directly comparable.
 
 Status: **harness scaffolding in place; full run pending.** The README comparison table
-marks Kestrel's published score as "in progress" until this lands.
+marks Tsaagan's published score as "in progress" until this lands.
 
 ## Reproducing
 
 ```bash
-GROQ_API_KEY=...  node kestrel.js bench               # default suite + capability matrix
+GROQ_API_KEY=...  node tsaagan.js bench               # default suite + capability matrix
 GROQ_API_KEY=...  node bench.js tasks=bench/your.json # custom task set
 ```
 

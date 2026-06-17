@@ -2,7 +2,7 @@
   <rect width="980" height="620" fill="#ffffff"/>
   <rect x="0.5" y="0.5" width="979" height="619" fill="none" stroke="#d0d7de"/>
 
-  <text x="36" y="46" font-size="26" font-weight="700" fill="#1a1a2e">🦅 Kestrel — capability layers</text>
+  <text x="36" y="46" font-size="26" font-weight="700" fill="#1a1a2e">🦖 Tsaagan — capability layers</text>
   <text x="36" y="72" font-size="14.5" fill="#555">Give your agent real hands. Use the <tspan font-weight="700" fill="#1a1a2e">lightest layer that does the job.</tspan></text>
 
   <!-- brain -->
@@ -12,9 +12,9 @@
   <line x1="490" y1="154" x2="490" y2="182" stroke="#9aa4b2" stroke-width="2"/>
   <polygon points="490,190 484,178 496,178" fill="#9aa4b2"/>
 
-  <!-- kestrel container -->
+  <!-- tsaagan container -->
   <rect x="40" y="192" width="900" height="316" rx="14" fill="#f6f8fa" stroke="#b5532a" stroke-width="2"/>
-  <text x="64" y="218" font-size="15" font-weight="700" fill="#b5532a">KESTREL — perceive · ground · act · VERIFY · self-heal</text>
+  <text x="64" y="218" font-size="15" font-weight="700" fill="#b5532a">TSAAGAN — perceive · ground · act · VERIFY · self-heal</text>
 
   <!-- three layer cards -->
   <!-- L1 API -->

@@ -3,8 +3,8 @@
   <rect x="0" y="0" width="980" height="660" fill="none" stroke="#d0d7de" stroke-width="1"/>
 
   <!-- title -->
-  <text x="40" y="48" font-size="28" font-weight="700" fill="#1a1a2e">🦅 Kestrel — how it works</text>
-  <text x="40" y="78" font-size="16" fill="#b5532a" font-weight="600">The brain decides. Kestrel is the hands.</text>
+  <text x="40" y="48" font-size="28" font-weight="700" fill="#1a1a2e">🦖 Tsaagan — how it works</text>
+  <text x="40" y="78" font-size="16" fill="#b5532a" font-weight="600">The brain decides. Tsaagan is the hands.</text>
 
   <!-- BRAIN -->
   <rect x="270" y="104" width="440" height="78" rx="12" fill="#fbeee6" stroke="#b5532a" stroke-width="2"/>
@@ -12,18 +12,18 @@
   <text x="490" y="156" text-anchor="middle" font-size="13" fill="#444">Claude Code · Codex / ChatGPT CLI · Cursor</text>
   <text x="490" y="173" text-anchor="middle" font-size="13" fill="#444">— or Groq, for fully autonomous mode</text>
 
-  <!-- arrow brain -> kestrel -->
+  <!-- arrow brain -> tsaagan -->
   <line x1="490" y1="182" x2="490" y2="214" stroke="#9aa4b2" stroke-width="2"/>
   <polygon points="490,222 484,210 496,210" fill="#9aa4b2"/>
 
-  <!-- KESTREL container -->
+  <!-- TSAAGAN container -->
   <rect x="50" y="224" width="880" height="270" rx="14" fill="#f6f8fa" stroke="#b5532a" stroke-width="2"/>
-  <text x="72" y="252" font-size="16" font-weight="700" fill="#b5532a">KESTREL — the hands (CLI · MCP · SDK → background daemon)</text>
+  <text x="72" y="252" font-size="16" font-weight="700" fill="#b5532a">TSAAGAN — the hands (CLI · MCP · SDK → background daemon)</text>
 
   <!-- CLI -> Daemon -->
   <rect x="80" y="270" width="180" height="56" rx="10" fill="#ffffff" stroke="#d0d7de" stroke-width="1.5"/>
   <text x="170" y="290" text-anchor="middle" font-size="13.5" font-weight="600" fill="#1a1a2e">CLI · MCP · SDK</text>
-  <text x="170" y="308" text-anchor="middle" font-size="10.5" fill="#666">kestrel · Claude/Cursor · JS+Py</text>
+  <text x="170" y="308" text-anchor="middle" font-size="10.5" fill="#666">tsaagan · Claude/Cursor · JS+Py</text>
 
   <line x1="260" y1="298" x2="312" y2="298" stroke="#9aa4b2" stroke-width="2"/>
   <polygon points="320,298 308,292 308,304" fill="#9aa4b2"/>
@@ -65,7 +65,7 @@
   <text x="80" y="452" font-size="12" fill="#555">Handles: iframes · shadow DOM · popups · cookie banners · file upload/download · multi-tab · 2FA · CAPTCHA hand-off · human cadence</text>
   <text x="80" y="474" font-size="12" fill="#555">Three autonomy tiers live here too: <tspan font-weight="600">run</tspan> (one-shot) · <tspan font-weight="600">serve</tspan> (HTTP goal server, no agent needed) · driven directly by your CLI.</text>
 
-  <!-- arrow kestrel -> browser -->
+  <!-- arrow tsaagan -> browser -->
   <line x1="490" y1="494" x2="490" y2="524" stroke="#9aa4b2" stroke-width="2"/>
   <polygon points="490,532 484,520 496,520" fill="#9aa4b2"/>
 

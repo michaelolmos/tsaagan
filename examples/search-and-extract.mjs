@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Example: drive Kestrel's daemon directly from Node to do a real multi-step
+// Example: drive Tsaagan's daemon directly from Node to do a real multi-step
 // task — search Wikipedia and read the result — with structural verification.
 //
 //   npm install && npx playwright install chromium
@@ -26,7 +26,7 @@ if (!(await alive())) {
 }
 
 await bp('goto', { url: 'https://www.wikipedia.org' });
-const typed = await bp('type', { selector: '#searchInput', text: 'Kestrel', submit: true, expectText: 'kestrel' });
+const typed = await bp('type', { selector: '#searchInput', text: 'Tsaagan', submit: true, expectText: 'tsaagan' });
 console.log('search verified:', typed.verify?.expectTextFound, '->', typed.verify?.urlAfter);
 
 const text = await bp('extract', {});

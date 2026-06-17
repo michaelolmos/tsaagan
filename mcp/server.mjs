@@ -1,12 +1,12 @@
-// Kestrel MCP server — exposes Kestrel's verify-first browser control to any
+// Tsaagan MCP server — exposes Tsaagan's verify-first browser control to any
 // MCP host (Claude Desktop, Claude Code, Cursor, ...) over stdio.
 //
 // Transport: newline-delimited JSON-RPC 2.0 on stdin/stdout (the MCP stdio
 // transport). stdout carries ONLY protocol messages; all logging goes to stderr.
-// Zero new dependencies — hand-rolled to preserve Kestrel's single-dependency
+// Zero new dependencies — hand-rolled to preserve Tsaagan's single-dependency
 // (Playwright) footprint.
 //
-// Run: `kestrel mcp`  (or `node mcp/server.mjs`)
+// Run: `tsaagan mcp`  (or `node mcp/server.mjs`)
 
 import fs from 'node:fs';
 import os from 'node:os';
@@ -25,7 +25,7 @@ try {
 } catch {}
 
 function log(...a) {
-  process.stderr.write(`[kestrel-mcp] ${a.join(' ')}\n`);
+  process.stderr.write(`[tsaagan-mcp] ${a.join(' ')}\n`);
 }
 
 function write(msg) {
@@ -46,11 +46,11 @@ async function callTool(name, args = {}) {
   if (!tool) return { content: [{ type: 'text', text: `Unknown tool: ${name}` }], isError: true };
 
   const ready = await ensureDaemon();
-  if (!ready.ok) return { content: [{ type: 'text', text: `Kestrel daemon unavailable: ${ready.error}` }], isError: true };
+  if (!ready.ok) return { content: [{ type: 'text', text: `Tsaagan daemon unavailable: ${ready.error}` }], isError: true };
 
   // Screenshots: have the daemon write a PNG, then return it as MCP image content.
   if (tool.screenshot) {
-    const outPath = path.join(os.tmpdir(), `kestrel-shot-${Date.now()}.png`);
+    const outPath = path.join(os.tmpdir(), `tsaagan-shot-${Date.now()}.png`);
     const r = await call('screenshot', { ...args, path: outPath });
     if (r?.ok === false) return { content: [{ type: 'text', text: jsonText(r) }], isError: true };
     const file = r?.path || outPath;
@@ -81,11 +81,11 @@ async function handle(msg) {
       reply(id, {
         protocolVersion: PROTOCOL_VERSION,
         capabilities: { tools: { listChanged: false } },
-        serverInfo: { name: 'kestrel', version: VERSION },
+        serverInfo: { name: 'tsaagan', version: VERSION },
         instructions:
-          'Kestrel drives a real browser with verify-first reliability. Read the page with kestrel_snapshot ' +
-          '(accessibility tree + stable refs), act with kestrel_click/type/fill_form, and trust the verify block ' +
-          'each mutating tool returns as proof the action worked. Use kestrel_network to discover a site\'s own ' +
+          'Tsaagan drives a real browser with verify-first reliability. Read the page with tsaagan_snapshot ' +
+          '(accessibility tree + stable refs), act with tsaagan_click/type/fill_form, and trust the verify block ' +
+          'each mutating tool returns as proof the action worked. Use tsaagan_network to discover a site\'s own ' +
           'data API. Only automate sites you are authorized to use.',
       });
       return;

@@ -1,21 +1,21 @@
-# kestrel-browser (Python client)
+# tsaagan (Python client)
 
-A thin, **dependency-free** Python client for [Kestrel](https://github.com/michaelolmos/kestrel) —
+A thin, **dependency-free** Python client for [Tsaagan](https://github.com/michaelolmos/tsaagan) —
 verify-first, human-like browser control for AI agents. Every call returns the data
 **and** a `verify` block proving the action worked.
 
 ```bash
-pip install kestrel-browser
+pip install tsaagan
 ```
 
-You also need the Kestrel daemon (the Node.js install). The client finds it via
-`daemon_cmd=`, the `$KESTREL_JS` env var (path to `kestrel.js`), or a `kestrel`
+You also need the Tsaagan daemon (the Node.js install). The client finds it via
+`daemon_cmd=`, the `$TSAAGAN_JS` env var (path to `tsaagan.js`), or a `tsaagan`
 binary on your PATH.
 
 ```python
-from kestrel_browser import Kestrel
+from tsaagan import Tsaagan
 
-k = Kestrel()                              # auto-starts a headless daemon
+k = Tsaagan()                              # auto-starts a headless daemon
 k.goto("https://example.com", expect_text="Example Domain")
 
 r = k.extract("the page heading")
@@ -29,7 +29,7 @@ k.stop()                                   # shut the daemon down
 ### Why verify-first?
 
 `browser-use`, `stagehand`, and `playwright-mcp` return data or raise — you write your
-own assertions to know an action landed. Kestrel returns proof on every call:
+own assertions to know an action landed. Tsaagan returns proof on every call:
 
 ```python
 res = k.click(text="Sign in", expect_text="Dashboard")
@@ -45,4 +45,4 @@ Tabs: `tabs()`, `switch_tab(i)`, `new_tab(url)`, `close_tab(i)`
 Lifecycle: `stop()`
 
 Only automate sites you own or are authorized to use. See the main repo's
-[Acceptable Use Policy](https://github.com/michaelolmos/kestrel/blob/main/ACCEPTABLE_USE.md).
+[Acceptable Use Policy](https://github.com/michaelolmos/tsaagan/blob/main/ACCEPTABLE_USE.md).

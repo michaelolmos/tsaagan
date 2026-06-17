@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// kestrel standalone agent server. Runs without any Claude Code session —
+// tsaagan standalone agent server. Runs without any Claude Code session —
 // hand it goals over HTTP (curl, cron, or another app) and it executes them
 // autonomously, persisting each run to the agent journal.
 //
@@ -18,13 +18,13 @@ for (const item of process.argv.slice(2)) {
   const m = item.match(/^([^=]+)=([\s\S]*)$/);
   if (m) argv[m[1]] = m[2];
 }
-const PORT = parseInt(process.env.KES_SERVE_PORT || argv.port || '39820', 10);
-const DAEMON_PORT = parseInt(process.env.KES_PORT || argv.daemon_port || '39817', 10);
+const PORT = parseInt(process.env.TSG_SERVE_PORT || argv.port || '39820', 10);
+const DAEMON_PORT = parseInt(process.env.TSG_PORT || argv.daemon_port || '39817', 10);
 const MODE = argv.mode || 'fresh';
 const HEADLESS = argv.headless !== 'false';
 
 if (!hasLLM()) {
-  console.error('no LLM key — set GROQ_API_KEY or OPENROUTER_API_KEY (or KES_LLM_BASE_URL for a custom endpoint)');
+  console.error('no LLM key — set GROQ_API_KEY or OPENROUTER_API_KEY (or TSG_LLM_BASE_URL for a custom endpoint)');
   process.exit(1);
 }
 
@@ -46,10 +46,10 @@ const server = http.createServer((req, res) => {
     return reply(403, { ok: false, error: 'cross-origin requests are not allowed' });
   }
 
-  // Optional shared-secret auth for shared/multi-user hosts. When KES_TOKEN is set,
-  // every request must carry a matching x-kestrel-token header. Off unless KES_TOKEN set.
-  if (process.env.KES_TOKEN && req.headers['x-kestrel-token'] !== process.env.KES_TOKEN) {
-    return reply(401, { ok: false, error: 'missing or invalid x-kestrel-token (KES_TOKEN is set)' });
+  // Optional shared-secret auth for shared/multi-user hosts. When TSG_TOKEN is set,
+  // every request must carry a matching x-tsaagan-token header. Off unless TSG_TOKEN set.
+  if (process.env.TSG_TOKEN && req.headers['x-tsaagan-token'] !== process.env.TSG_TOKEN) {
+    return reply(401, { ok: false, error: 'missing or invalid x-tsaagan-token (TSG_TOKEN is set)' });
   }
 
   if (req.method === 'GET' && req.url === '/health') return reply(200, { ok: true, busy, daemonPort: DAEMON_PORT });
@@ -98,5 +98,5 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, '127.0.0.1', () => {
-  console.log(`[kestrel] agent server on http://127.0.0.1:${PORT} (daemon :${DAEMON_PORT}, mode=${MODE})`);
+  console.log(`[tsaagan] agent server on http://127.0.0.1:${PORT} (daemon :${DAEMON_PORT}, mode=${MODE})`);
 });

@@ -1,11 +1,11 @@
-# HEARTBEAT.md — Kestrel running on its own
+# HEARTBEAT.md — Tsaagan running on its own
 
-A heartbeat turns Kestrel from a tool you call into an agent that *acts on a
+A heartbeat turns Tsaagan from a tool you call into an agent that *acts on a
 cadence*. **Opt-in by design** (autonomy + cost + safety), off unless you start it.
 
 ## What a heartbeat does, each tick
 
-1. **Wake** on a schedule (cron / `kestrel serve` + an external trigger / a loop).
+1. **Wake** on a schedule (cron / `tsaagan serve` + an external trigger / a loop).
 2. **Recall** relevant memory — `brain.recall(<task/site>)` + `recall` for the domain
    (learned selectors, prior episodes, anti-abuse lessons).
 3. **Choose the lightest layer** for the job (API → real-browser → CDP — see
@@ -17,10 +17,10 @@ cadence*. **Opt-in by design** (autonomy + cost + safety), off unless you start 
 
 ## Running it
 
-- **One-shot / unattended:** `kestrel run goal="…"` (Groq brain).
-- **Server:** `kestrel serve` → POST goals over HTTP (cron, another app, your agent).
+- **One-shot / unattended:** `tsaagan run goal="…"` (Groq brain).
+- **Server:** `tsaagan serve` → POST goals over HTTP (cron, another app, your agent).
 - **In Claude Code / your CLI:** dispatch the loop yourself on whatever schedule your
-  harness provides; Kestrel supplies the hands + memory.
+  harness provides; Tsaagan supplies the hands + memory.
 
 ## Heartbeat rules
 

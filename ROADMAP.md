@@ -1,6 +1,6 @@
 # Roadmap
 
-Kestrel is functional and used. These are the next worthwhile directions —
+Tsaagan is functional and used. These are the next worthwhile directions —
 contributions welcome.
 
 ## Recently shipped (v0.5–0.11)

@@ -1,6 +1,6 @@
 # Action Protocol
 
-Kestrel's daemon control plane accepts a JSON envelope:
+Tsaagan's daemon control plane accepts a JSON envelope:
 
 ```json
 { "action": "click", "args": { "ref": "e5", "expectText": "Saved" } }
@@ -10,13 +10,13 @@ The public protocol artifacts live in:
 
 - `protocol/actions.schema.json` — JSON Schema for action envelopes and common
   response shapes.
-- `protocol/kestrel.d.ts` — TypeScript declarations for common args and verified
+- `protocol/tsaagan.d.ts` — TypeScript declarations for common args and verified
   responses.
 
 The CLI can print their absolute paths:
 
 ```bash
-kestrel protocol
+tsaagan protocol
 ```
 
 Mutating browser actions should return:

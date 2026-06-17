@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to Kestrel. Format loosely follows [Keep a Changelog](https://keepachangelog.com).
+All notable changes to Tsaagan. Format loosely follows [Keep a Changelog](https://keepachangelog.com).
 
 ## [1.0.0] — Initial public release
 

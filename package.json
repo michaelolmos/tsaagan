@@ -1,12 +1,12 @@
 {
-  "name": "kestrel",
+  "name": "tsaagan",
   "version": "1.0.0",
   "description": "Human-like browser control for AI agents: accessibility-tree perception, self-healing stable-ref grounding, structural post-condition verification, vision Set-of-Marks fallback, auto-learning cross-session site memory, reliable human-cadence input, and an autonomous planner→navigator→validator loop. Persistent daemon + thin CLI. For authorized, productivity automation.",
   "type": "module",
   "author": "Michael Olmos",
   "bin": {
-    "kestrel": "./kestrel.js",
-    "kes": "./kestrel.js"
+    "tsaagan": "./tsaagan.js",
+    "tsg": "./tsaagan.js"
   },
   "scripts": {
     "daemon": "node daemon.js",
@@ -26,10 +26,10 @@
     "model-context-protocol"
   ],
   "license": "MIT",
-  "repository": { "type": "git", "url": "git+https://github.com/michaelolmos/kestrel.git" },
-  "homepage": "https://github.com/michaelolmos/kestrel#readme",
-  "bugs": { "url": "https://github.com/michaelolmos/kestrel/issues" },
-  "files": ["daemon.js", "kestrel.js", "agent.js", "native.js", "run.js", "server.js", "bench.js", "lib/", "bench/", "docs/", "extension/", "protocol/", "mcp/", "sdk/", "SOUL.md", "AGENTS.md", "HEARTBEAT.md", "README.md", "LICENSE", "ACCEPTABLE_USE.md", "SECURITY.md"],
+  "repository": { "type": "git", "url": "git+https://github.com/michaelolmos/tsaagan.git" },
+  "homepage": "https://github.com/michaelolmos/tsaagan#readme",
+  "bugs": { "url": "https://github.com/michaelolmos/tsaagan/issues" },
+  "files": ["daemon.js", "tsaagan.js", "agent.js", "native.js", "run.js", "server.js", "bench.js", "lib/", "bench/", "docs/", "extension/", "protocol/", "mcp/", "sdk/", "SOUL.md", "AGENTS.md", "HEARTBEAT.md", "README.md", "LICENSE", "ACCEPTABLE_USE.md", "SECURITY.md"],
   "optionalDependencies": {},
   "engines": {
     "node": ">=20"

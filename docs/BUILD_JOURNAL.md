@@ -1,6 +1,6 @@
 # Build journal
 
-How Kestrel came to be — the research, the decisions, and every feature wave.
+How Tsaagan came to be — the research, the decisions, and every feature wave.
 Written so a newcomer (or future maintainer) understands not just *what* exists
 but *why*.
 
@@ -50,7 +50,7 @@ layer.
 
 ## 4. Naming & open-sourcing
 
-Renamed from the working title to **Kestrel** — a falcon known for its precise,
+Renamed from the working title to **Tsaagan** — a falcon known for its precise,
 self-correcting hunting dive. Extracted into a standalone MIT repo.
 
 ## 5. The correctness lesson: trusted input
@@ -66,12 +66,12 @@ never submits. The fix isn't about hiding; it's about delivering *genuine* input
 - **Extension mode** — a companion extension delivers `isTrusted=true` clicks at
   viewport coordinates, cross-platform. See [RELIABILITY.md](RELIABILITY.md).
 
-We also fixed a real gap: **self-learning fires automatically** — Kestrel auto-captures
+We also fixed a real gap: **self-learning fires automatically** — Tsaagan auto-captures
 working selectors and, when a site shows an anti-abuse/CAPTCHA wall, records a lesson
 and slows the pace (and the doctrine is to hand off to a human, never push through).
 
 > Scope note: the strictest sites (large search/AI platforms) block automation
-> outright and also score behavior/account risk. Kestrel doesn't try to get past that
+> outright and also score behavior/account risk. Tsaagan doesn't try to get past that
 > — automating a site that forbids it can violate its terms. Stay authorized.
 
 ## 6. Power & polish
@@ -81,7 +81,7 @@ and slows the pace (and the doctrine is to hand off to a human, never push throu
 - More verbs: `network` (API discovery), `cookies` (session export), `pdf`,
   `assert`, `--proxy`, `click_xy`, `keychain`, pace governor.
 - Tests (`node --test`): TOTP unit tests vs RFC vectors + a headless integration
-  smoke (goto/snapshot/click/self-heal/vision). Benchmark: `kestrel bench`.
+  smoke (goto/snapshot/click/self-heal/vision). Benchmark: `tsaagan bench`.
 - Docs, diagrams (SVG), a demo GIF, and this journal.
 
 ## 7. The coordinate reckoning → extension mode
@@ -104,7 +104,7 @@ scaled displays.
 
 ## Design principles that held throughout
 
-1. **The brain decides; Kestrel is the hands.** No LLM calls when an agent drives it.
+1. **The brain decides; Tsaagan is the hands.** No LLM calls when an agent drives it.
 2. **Verify, don't trust.** Structural post-conditions over self-report.
 3. **Stable grounding that self-heals.** Never indices, never raw coordinates as primary.
 4. **Be honest about limits.** Especially detection — no overselling.

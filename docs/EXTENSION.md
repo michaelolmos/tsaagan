@@ -17,7 +17,7 @@ extension that uses `chrome.debugger`'s Input domain. Why it's the most robust m
 ## Setup — zero manual steps (the default)
 
 ```bash
-node kestrel.js ext-setup        # → { connected: true } in ~10s
+node tsaagan.js ext-setup        # → { connected: true } in ~10s
 ```
 
 `ext-setup` starts the daemon in extension mode and launches **Chrome for Testing**
@@ -35,13 +35,13 @@ If you specifically want the extension inside your **real, daily Chrome** (your 
 logged-in session), it's a one-time manual load:
 
 ```bash
-node kestrel.js ext-setup browser=chrome
+node tsaagan.js ext-setup browser=chrome
 ```
 
 1. Open `chrome://extensions`, enable **Developer mode** (top-right).
 2. **Load unpacked** → highlight this repo's `extension/` **folder from its parent
    directory** (don't navigate inside it — the Select button greys out).
-3. It connects within seconds: `kestrel status` → `connected: true`.
+3. It connects within seconds: `tsaagan status` → `connected: true`.
 
 ### Localhost transport requirements (already handled)
 
@@ -56,23 +56,23 @@ If you run the daemon on another port, edit `DAEMON` in `extension/background.js
 ## Use
 
 ```bash
-kestrel status                        # → { mode: 'extension', connected: true }
-kestrel goto url=https://example.com
-kestrel snapshot                      # interactive elements + stable refs (data-kref)
-kestrel click ref=5                   # trusted click at viewport coords
-kestrel type ref=3 text="hello@x.com" submit=true
-kestrel press keys="Meta+Enter"       # trusted key combo
-kestrel upload_file ref=5 path=/abs/a.png,/abs/b.png  # trusted file upload via CDP DOM.setFileInputFiles
-kestrel scroll direction=down         # or to_text="pricing" (re-snapshot after)
-kestrel wait_for text="Welcome"       # or url=… / selector=… [timeout=15000]
-kestrel screenshot                    # saved to ~/.kestrel/shots/, returns the path
-kestrel tabs | new_tab url=… | switch_tab index=1 | close_tab index=1
-kestrel back | forward | extract | eval js="location.href"
-kestrel stop
+tsaagan status                        # → { mode: 'extension', connected: true }
+tsaagan goto url=https://example.com
+tsaagan snapshot                      # interactive elements + stable refs (data-kref)
+tsaagan click ref=5                   # trusted click at viewport coords
+tsaagan type ref=3 text="hello@x.com" submit=true
+tsaagan press keys="Meta+Enter"       # trusted key combo
+tsaagan upload_file ref=5 path=/abs/a.png,/abs/b.png  # trusted file upload via CDP DOM.setFileInputFiles
+tsaagan scroll direction=down         # or to_text="pricing" (re-snapshot after)
+tsaagan wait_for text="Welcome"       # or url=… / selector=… [timeout=15000]
+tsaagan screenshot                    # saved to ~/.tsaagan/shots/, returns the path
+tsaagan tabs | new_tab url=… | switch_tab index=1 | close_tab index=1
+tsaagan back | forward | extract | eval js="location.href"
+tsaagan stop
 ```
 
-Whatever **tab is active** in the frontmost window of the Kestrel-launched browser
-is the one Kestrel drives.
+Whatever **tab is active** in the frontmost window of the Tsaagan-launched browser
+is the one Tsaagan drives.
 
 > **Ref format differs by mode.** Extension mode uses integer `ref=N` (from each
 > snapshot's `data-kref` index). CDP mode uses string `ref=eN` (from the
@@ -88,11 +88,11 @@ listener read **`event.isTrusted === true`** → second click navigated to
 
 ## Notes & limits (honest)
 
-- Chrome shows a **"Kestrel Companion started debugging this browser"** banner while
+- Chrome shows a **"Tsaagan Companion started debugging this browser"** banner while
   the debugger is attached. The extension attaches/detaches **per action**, so it
   flashes briefly rather than staying up. (You can suppress it by launching Chrome
   with `--silent-debugger-extension-api`, but that requires relaunching Chrome.)
-- While Kestrel holds the debugger on a tab, you can't have DevTools open on that
+- While Tsaagan holds the debugger on a tab, you can't have DevTools open on that
   same tab.
 - `eval` runs in the page's MAIN world and is subject to the page's CSP — it may be
   blocked on strict sites (e.g. Gmail). `snapshot` / `click` / `type` / `extract`

@@ -1,16 +1,16 @@
-// Kestrel MCP tool catalog.
+// Tsaagan MCP tool catalog.
 //
-// Each entry maps a Model Context Protocol tool to one Kestrel daemon action
+// Each entry maps a Model Context Protocol tool to one Tsaagan daemon action
 // ({ action, args } over the localhost control plane). Input-schema property
 // names match the daemon's arg names 1:1, so the handler can forward arguments
 // verbatim — no translation layer to drift out of sync.
 //
-// The wedge: every mutating tool returns Kestrel's `verify` block
+// The wedge: every mutating tool returns Tsaagan's `verify` block
 // (urlChanged, newConsoleErrors, failedRequests, expectTextFound) in the same
 // response — proof the action worked, with no extra snapshot round-trip. That
 // guarantee leads each mutating tool's description on purpose.
 
-const REF = { type: 'string', description: "Stable element ref from kestrel_snapshot, e.g. 'e5'. Refs survive re-renders but reset after navigation — re-snapshot for fresh refs." };
+const REF = { type: 'string', description: "Stable element ref from tsaagan_snapshot, e.g. 'e5'. Refs survive re-renders but reset after navigation — re-snapshot for fresh refs." };
 const VERIFY_NOTE = 'Returns a verify block (urlChanged, console errors, failed requests, optional expected-text) so you know it worked without a separate snapshot.';
 
 /** @typedef {{name:string,title:string,description:string,inputSchema:object,annotations:object,action:string,screenshot?:boolean}} Tool */
@@ -18,17 +18,17 @@ const VERIFY_NOTE = 'Returns a verify block (urlChanged, console errors, failed 
 /** @type {Tool[]} */
 export const TOOLS = [
   {
-    name: 'kestrel_status',
+    name: 'tsaagan_status',
     title: 'Daemon & Page Status',
-    description: 'Report whether the Kestrel daemon is running, the active mode (Playwright CDP / macOS native / MV3 extension), and the current page URL/title. Call this first if other tools return a connection error.',
+    description: 'Report whether the Tsaagan daemon is running, the active mode (Playwright CDP / macOS native / MV3 extension), and the current page URL/title. Call this first if other tools return a connection error.',
     annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
     inputSchema: { type: 'object', properties: {} },
     action: 'status',
   },
   {
-    name: 'kestrel_navigate',
+    name: 'tsaagan_navigate',
     title: 'Navigate to URL',
-    description: `Navigate the browser to a URL. ${VERIFY_NOTE} Use kestrel_snapshot afterward to read the page.`,
+    description: `Navigate the browser to a URL. ${VERIFY_NOTE} Use tsaagan_snapshot afterward to read the page.`,
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
     inputSchema: {
       type: 'object',
@@ -41,7 +41,7 @@ export const TOOLS = [
     action: 'goto',
   },
   {
-    name: 'kestrel_snapshot',
+    name: 'tsaagan_snapshot',
     title: 'Accessibility Snapshot',
     description: 'Capture the current page as an accessibility tree with stable element refs (e1, e2...). No screenshot, no vision model needed — cheaper and more reliable than pixels. Pass full=true for the complete tree; default returns the interactive/condensed view.',
     annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
@@ -52,9 +52,9 @@ export const TOOLS = [
     action: 'snapshot',
   },
   {
-    name: 'kestrel_click',
+    name: 'tsaagan_click',
     title: 'Click Element',
-    description: `Click an element by stable ref, CSS selector, or visible text. ${VERIFY_NOTE} Prefer ref (from kestrel_snapshot) — it survives DOM re-renders where selectors break.`,
+    description: `Click an element by stable ref, CSS selector, or visible text. ${VERIFY_NOTE} Prefer ref (from tsaagan_snapshot) — it survives DOM re-renders where selectors break.`,
     annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: true },
     inputSchema: {
       type: 'object',
@@ -69,7 +69,7 @@ export const TOOLS = [
     action: 'click',
   },
   {
-    name: 'kestrel_type',
+    name: 'tsaagan_type',
     title: 'Type Text',
     description: `Type text into an element (by ref/selector) with human-cadence keystrokes. Set submit=true to press Enter after. ${VERIFY_NOTE}`,
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
@@ -87,7 +87,7 @@ export const TOOLS = [
     action: 'type',
   },
   {
-    name: 'kestrel_fill_form',
+    name: 'tsaagan_fill_form',
     title: 'Fill Form',
     description: `Fill multiple fields in one call, each by ref/selector/role+name, then optionally submit. ${VERIFY_NOTE}`,
     annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: true },
@@ -117,7 +117,7 @@ export const TOOLS = [
     action: 'fill_form',
   },
   {
-    name: 'kestrel_select',
+    name: 'tsaagan_select',
     title: 'Select Option',
     description: `Select an option in a dropdown by value (or label). ${VERIFY_NOTE}`,
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
@@ -133,7 +133,7 @@ export const TOOLS = [
     action: 'select',
   },
   {
-    name: 'kestrel_press',
+    name: 'tsaagan_press',
     title: 'Press Key',
     description: `Press a key or chord (e.g. "Enter", "Escape", "Control+A"). ${VERIFY_NOTE}`,
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
@@ -148,7 +148,7 @@ export const TOOLS = [
     action: 'press',
   },
   {
-    name: 'kestrel_scroll',
+    name: 'tsaagan_scroll',
     title: 'Scroll Page',
     description: 'Scroll the page up or down, or until a target text is in view. Use when content is below the fold and missing from the snapshot.',
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
@@ -162,7 +162,7 @@ export const TOOLS = [
     action: 'scroll',
   },
   {
-    name: 'kestrel_wait_for',
+    name: 'tsaagan_wait_for',
     title: 'Wait For Condition',
     description: 'Wait for a condition before proceeding: text to appear, a selector, a URL substring, or network idle. Prefer this over fixed sleeps after async actions.',
     annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
@@ -179,7 +179,7 @@ export const TOOLS = [
     action: 'wait_for',
   },
   {
-    name: 'kestrel_extract',
+    name: 'tsaagan_extract',
     title: 'Extract Data',
     description: 'Extract structured data from the current page using a natural-language query, from the accessibility tree (no vision needed).',
     annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
@@ -190,7 +190,7 @@ export const TOOLS = [
     action: 'extract',
   },
   {
-    name: 'kestrel_assert',
+    name: 'tsaagan_assert',
     title: 'Assert Page State',
     description: 'Assert the current page state without acting: expected text present, URL match, or a selector visible. Use as a final proof-of-success check after a sequence of actions.',
     annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
@@ -205,9 +205,9 @@ export const TOOLS = [
     action: 'assert',
   },
   {
-    name: 'kestrel_screenshot',
+    name: 'tsaagan_screenshot',
     title: 'Screenshot (Vision Fallback)',
-    description: 'Capture a PNG screenshot of the page. Use only as a fallback when kestrel_snapshot cannot identify an element (canvas/WebGL UIs). For normal pages, kestrel_snapshot is cheaper and more reliable.',
+    description: 'Capture a PNG screenshot of the page. Use only as a fallback when tsaagan_snapshot cannot identify an element (canvas/WebGL UIs). For normal pages, tsaagan_snapshot is cheaper and more reliable.',
     annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
     inputSchema: {
       type: 'object',
@@ -217,7 +217,7 @@ export const TOOLS = [
     screenshot: true,
   },
   {
-    name: 'kestrel_tabs',
+    name: 'tsaagan_tabs',
     title: 'List Tabs',
     description: 'List open browser tabs with their index, URL, and title.',
     annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
@@ -225,15 +225,15 @@ export const TOOLS = [
     action: 'tabs',
   },
   {
-    name: 'kestrel_switch_tab',
+    name: 'tsaagan_switch_tab',
     title: 'Switch Tab',
-    description: 'Switch the active tab by index (from kestrel_tabs).',
+    description: 'Switch the active tab by index (from tsaagan_tabs).',
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
     inputSchema: { type: 'object', properties: { index: { type: 'integer', description: 'Tab index.' } }, required: ['index'] },
     action: 'switch_tab',
   },
   {
-    name: 'kestrel_new_tab',
+    name: 'tsaagan_new_tab',
     title: 'New Tab',
     description: 'Open a new tab, optionally navigating to a URL.',
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
@@ -241,7 +241,7 @@ export const TOOLS = [
     action: 'new_tab',
   },
   {
-    name: 'kestrel_close_tab',
+    name: 'tsaagan_close_tab',
     title: 'Close Tab',
     description: 'Close a tab by index (defaults to the active tab).',
     annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: false },
@@ -249,7 +249,7 @@ export const TOOLS = [
     action: 'close_tab',
   },
   {
-    name: 'kestrel_back',
+    name: 'tsaagan_back',
     title: 'Go Back',
     description: 'Navigate back in browser history.',
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
@@ -257,7 +257,7 @@ export const TOOLS = [
     action: 'back',
   },
   {
-    name: 'kestrel_console_log',
+    name: 'tsaagan_console_log',
     title: 'Console Messages',
     description: 'Return recent browser console messages — useful for diagnosing why an action failed.',
     annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
@@ -265,7 +265,7 @@ export const TOOLS = [
     action: 'console_log',
   },
   {
-    name: 'kestrel_network',
+    name: 'tsaagan_network',
     title: 'Network / API Discovery',
     description: "Return recent network requests the page made (xhr/fetch). Use to discover a site's own data API endpoints — often you can read data straight from them instead of scraping the UI.",
     annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
@@ -279,9 +279,9 @@ export const TOOLS = [
     action: 'network',
   },
   {
-    name: 'kestrel_recall',
+    name: 'tsaagan_recall',
     title: 'Recall Site Memory',
-    description: "Recall what Kestrel learned about a domain on past sessions — selectors, pacing, notes. Call before a complex flow on a site you may have used before.",
+    description: "Recall what Tsaagan learned about a domain on past sessions — selectors, pacing, notes. Call before a complex flow on a site you may have used before.",
     annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
     inputSchema: { type: 'object', properties: { domain: { type: 'string', description: "Domain, e.g. 'github.com'." } }, required: ['domain'] },
     action: 'recall',

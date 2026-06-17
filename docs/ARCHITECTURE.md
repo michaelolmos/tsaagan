@@ -1,6 +1,6 @@
 # Architecture
 
-Kestrel is a small set of cooperating pieces. This doc explains how each works
+Tsaagan is a small set of cooperating pieces. This doc explains how each works
 and why it's designed that way.
 
 ![architecture](architecture.svg)
@@ -8,7 +8,7 @@ and why it's designed that way.
 ## The shape
 
 ```
-kestrel.js   thin CLI ─ POSTs {action,args} over HTTP ─▶  daemon.js
+tsaagan.js   thin CLI ─ POSTs {action,args} over HTTP ─▶  daemon.js
                                                             │  one persistent
                                                             │  browser session
 agent.js     planner → navigator → validator loop (Groq) + task memory
@@ -42,14 +42,14 @@ Two representations, picked per task:
    cheap, semantic, and survives visual redesigns. It's the same mechanism
    Playwright's own MCP uses, and it pierces iframes and shadow DOM natively.
 2. **Vision Set-of-Marks** (`snapshot mode=vision`) — for canvas / custom-rendered
-   UIs where the a11y tree is empty. Kestrel injects a numbered overlay on every
+   UIs where the a11y tree is empty. Tsaagan injects a numbered overlay on every
    visible interactive element, screenshots it, and returns a `label → {role,name,
    cx,cy}` map. The model then acts by mark number or coordinate.
 
 ## Grounding (and why it self-heals)
 
 The model never sees coordinates or selectors — it picks a `ref`. At action time
-the daemon resolves `aria-ref=eN` to a live locator. The dead-ends Kestrel avoids:
+the daemon resolves `aria-ref=eN` to a live locator. The dead-ends Tsaagan avoids:
 
 - **integer indices** (break on any DOM mutation),
 - **model-written CSS/XPath** (break on redesign),
@@ -76,7 +76,7 @@ self-checking step; a failed expectation flips `ok` to false.
 
 ## Memory & self-learning
 
-Per-domain files at `~/.kestrel/memory/<domain>.json` hold learned selectors and
+Per-domain files at `~/.tsaagan/memory/<domain>.json` hold learned selectors and
 notes. Learning happens **automatically**:
 
 - A successful action with a durable selector is auto-recorded (no `remember` call).
@@ -111,5 +111,5 @@ repeat-guard prevents loops; CAPTCHA detection triggers a human hand-off.
 ## Control protocol
 
 `POST http://127.0.0.1:<port>/` with `{"action": "...", "args": {...}}`. Any
-language can drive Kestrel — the `kestrel` CLI is just one client; `server.js`
+language can drive Tsaagan — the `tsaagan` CLI is just one client; `server.js`
 exposes a higher-level `POST /goal`.

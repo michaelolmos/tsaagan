@@ -1,10 +1,10 @@
 #!/usr/bin/env node
-// kestrel daemon — holds ONE persistent Playwright page so that
+// tsaagan daemon — holds ONE persistent Playwright page so that
 // accessibility-tree `aria-ref` grounding survives across discrete CLI calls,
 // and runs the observe -> act -> VERIFY -> self-heal loop server-side.
 //
 // Control plane: tiny JSON-over-HTTP server on 127.0.0.1:<port>.
-// Each thin `kestrel` CLI invocation POSTs {action,args} and prints the JSON result.
+// Each thin `tsaagan` CLI invocation POSTs {action,args} and prints the JSON result.
 //
 // The differentiator vs every other harness: every mutating action returns a
 // `verify` block built from structural post-conditions (url delta, expected
@@ -76,7 +76,7 @@ const MODE = argv.mode || 'fresh'; // fresh | clone | live
 const CDP = argv.cdp || 'http://127.0.0.1:9222';
 const HEADLESS = argv.headless === true || argv.headless === 'true';
 const USERDATA =
-  argv.userdata || path.join(os.homedir(), '.kestrel', 'profile-fresh');
+  argv.userdata || path.join(os.homedir(), '.tsaagan', 'profile-fresh');
 const GLOBAL_PACE = argv.pace || 'fast'; // fast | slow | human (per-domain memory can override)
 const TIMEZONE = argv.timezone || 'America/New_York'; // configurable; used for locale/date consistency
 const CHANNEL = argv.channel || 'chrome'; // prefer the real Chrome binary; falls back to bundled chromium
@@ -104,13 +104,13 @@ function paceMs() {
 const human = () => new Promise((r) => setTimeout(r, paceMs()));
 
 // Heuristic: does this action look consequential / irreversible? Used to surface a
-// caution to the driving agent (and optionally hard-block via KES_CONFIRM_CONSEQUENTIAL).
+// caution to the driving agent (and optionally hard-block via TSG_CONFIRM_CONSEQUENTIAL).
 const CONSEQUENTIAL_RE = /\b(buy|purchase|pay|payment|checkout|place order|order now|delete|remove|send|transfer|withdraw|subscribe|unsubscribe|confirm|submit)\b/i;
 const consequentialSignal = (args, meta = {}) =>
   CONSEQUENTIAL_RE.test([args.text, args.selector, args.expectText, args.value, args.label, meta?.name].filter(Boolean).join(' '));
 
 // ---------- state ----------
-const HOME_KES = path.join(os.homedir(), '.kestrel');
+const HOME_KES = path.join(os.homedir(), '.tsaagan');
 const state = {
   browser: null,
   context: null,
@@ -158,7 +158,7 @@ const LOG_IGNORED_ACTIONS = new Set(['status', 'record_status']);
 const SECRET_KEY_RE = /secret|password|pass|token|authorization|cookie|totp/i;
 
 function slugify(s) {
-  return String(s || 'kestrel-run').toLowerCase().replace(/[^a-z0-9._-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80) || 'kestrel-run';
+  return String(s || 'tsaagan-run').toLowerCase().replace(/[^a-z0-9._-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80) || 'tsaagan-run';
 }
 
 function redact(value, key = '') {
@@ -225,7 +225,7 @@ function writeJsonFile(file, data) {
   fs.writeFileSync(file, JSON.stringify(data, null, 2) + '\n');
 }
 
-// Confine a caller-supplied output path to an allowlisted base (~/.kestrel or the
+// Confine a caller-supplied output path to an allowlisted base (~/.tsaagan or the
 // OS temp dir). The driving model can be steered by a prompt-injecting page (see
 // SECURITY.md), so a path like `report path=~/.zshrc` must not become an
 // arbitrary-file-overwrite primitive. Default paths already live under these bases,
@@ -241,7 +241,7 @@ function containedOutputPath(p) {
   const resolved = path.resolve(String(p));
   const ok = OUTPUT_BASES.some((base) => resolved === base || resolved.startsWith(base + path.sep));
   if (!ok) {
-    throw new Error(`output path must be inside ~/.kestrel or the temp dir (got: ${resolved})`);
+    throw new Error(`output path must be inside ~/.tsaagan or the temp dir (got: ${resolved})`);
   }
   return resolved;
 }
@@ -275,7 +275,7 @@ function buildReport(limit = 100) {
 
 function renderMarkdownReport(report) {
   const lines = [
-    '# Kestrel Run Report',
+    '# Tsaagan Run Report',
     '',
     `Generated: ${report.generatedAt}`,
     `Mode: ${report.mode}`,
@@ -380,7 +380,7 @@ async function launch() {
     return;
   }
   if (state.mode === 'extension') {
-    // Drive the user's real Chrome through the Kestrel companion extension
+    // Drive the user's real Chrome through the Tsaagan companion extension
     // (chrome.debugger Input → isTrusted=true, viewport coords → no screen math).
     // No Playwright; commands are bridged to the extension via HTTP long-poll.
     // A per-session token authenticates the bridge: without it ANY web page could
@@ -390,9 +390,9 @@ async function launch() {
     // so a page (which can't read local files) can never present it.
     state.ext = { queue: [], waiters: [], pending: {}, seq: 0, connected: false, token: crypto.randomBytes(24).toString('hex') };
     try {
-      fs.writeFileSync(path.join(HOME_KES, 'ext-token.js'), `self.KESTREL_EXT_TOKEN = ${JSON.stringify(state.ext.token)};\n`, { mode: 0o600 });
+      fs.writeFileSync(path.join(HOME_KES, 'ext-token.js'), `self.TSAAGAN_EXT_TOKEN = ${JSON.stringify(state.ext.token)};\n`, { mode: 0o600 });
     } catch (e) {
-      console.log('[kestrel] WARNING: could not write ext-token file: ' + String(e?.message || e));
+      console.log('[tsaagan] WARNING: could not write ext-token file: ' + String(e?.message || e));
     }
     state.ready = true;
     return;
@@ -533,7 +533,7 @@ function findRefByRoleName(role, name) {
 }
 
 // ---------- cross-session site memory (Wave C) ----------
-// Per-domain store at ~/.kestrel/memory/<host>.json:
+// Per-domain store at ~/.tsaagan/memory/<host>.json:
 //   { selectors: { "<key>": {selector, role, name, hits, ts} }, notes: [...] }
 // Lets the agent learn a site once and replay durable selectors next session.
 function domainOf(u) {
@@ -618,7 +618,7 @@ const ABUSE_RE =
 
 // After a navigation/action, scan the page for anti-abuse signals and, if found,
 // AUTO-write a durable lesson to this domain's memory + mark it "human pace".
-// This is the fix for "Kestrel didn't learn the Flow throttle on its own".
+// This is the fix for "Tsaagan didn't learn the Flow throttle on its own".
 async function autoNoteAbuse(domain) {
   let txt = '';
   try {
@@ -814,7 +814,7 @@ const actions = {
     if (mode === 'vision') return { ok: true, mode: 'vision', ...(await visionSnapshot()) };
     const s = await snapshot({ full });
     const out = { ok: true, mode: 'a11y', ...s };
-    // LEARNING-LOOP FEEDBACK: surface what Kestrel learned about this domain so the
+    // LEARNING-LOOP FEEDBACK: surface what Tsaagan learned about this domain so the
     // driving agent adapts THIS observe→act cycle (pace, notes, prior lessons).
     try {
       const d = domainOf(state.page.url());
@@ -833,7 +833,7 @@ const actions = {
     } catch {}
     // Passive guardrail: surface a CAPTCHA / anti-abuse wall automatically so the
     // driving agent stops and hands off to a human, even if it never calls
-    // detect_captcha. Kestrel does not solve these — it reports and steps back.
+    // detect_captcha. Tsaagan does not solve these — it reports and steps back.
     try {
       const c = await actions.detect_captcha();
       if (c.captcha) {
@@ -844,7 +844,7 @@ const actions = {
     return out;
   },
 
-  // Explicit pull of what Kestrel knows about a domain/task (the feedback half of
+  // Explicit pull of what Tsaagan knows about a domain/task (the feedback half of
   // the learning loop, for the driving agent to read before acting).
   async advise({ query, domain }) {
     const d = domain || domainOf(state.page.url());
@@ -858,18 +858,18 @@ const actions = {
 
   async click(args) {
     // Guardrail: flag consequential/irreversible clicks so a human stays in the loop.
-    // Non-blocking by default; hard-block when KES_CONFIRM_CONSEQUENTIAL=1 unless the
+    // Non-blocking by default; hard-block when TSG_CONFIRM_CONSEQUENTIAL=1 unless the
     // caller passes confirm=true (i.e. a human approved this specific action).
     const refMeta = args.ref ? state.lastRefMeta[args.ref] : null;
     const consequential = consequentialSignal(args, refMeta);
-    if (consequential && process.env.KES_CONFIRM_CONSEQUENTIAL === '1' && !args.confirm) {
+    if (consequential && process.env.TSG_CONFIRM_CONSEQUENTIAL === '1' && !args.confirm) {
       const verify = await buildVerify(Date.now(), state.page.url(), args, {
         actionTaken: false,
         blocked: 'consequential-confirmation',
       });
       return { ok: false, consequential: true, needsConfirm: true,
         verify,
-        error: `consequential action blocked (KES_CONFIRM_CONSEQUENTIAL=1) — have a human approve, then re-issue with confirm=true: ${args.text || refMeta?.name || args.selector || args.ref || args.som || ''}`.trim() };
+        error: `consequential action blocked (TSG_CONFIRM_CONSEQUENTIAL=1) — have a human approve, then re-issue with confirm=true: ${args.text || refMeta?.name || args.selector || args.ref || args.som || ''}`.trim() };
     }
     const d = applyCache(args);
     await human();
@@ -1084,7 +1084,7 @@ const actions = {
   async screenshot({ path: p, fullPage }) {
     let out;
     try {
-      out = p ? containedOutputPath(p) : path.join(os.tmpdir(), `kestrel-${Date.now()}.png`);
+      out = p ? containedOutputPath(p) : path.join(os.tmpdir(), `tsaagan-${Date.now()}.png`);
     } catch (e) {
       return { ok: false, error: String(e?.message || e) };
     }
@@ -1136,8 +1136,8 @@ const actions = {
   async eval({ js }) {
     // Arbitrary in-page JS is a powerful sink (can read page secrets), so it's
     // OFF by default. snapshot/extract/click cover normal use. Opt in explicitly.
-    if (process.env.KES_ENABLE_EVAL !== '1') {
-      return { ok: false, error: 'eval is disabled — set KES_ENABLE_EVAL=1 to enable arbitrary in-page JS (use snapshot/extract instead where possible)' };
+    if (process.env.TSG_ENABLE_EVAL !== '1') {
+      return { ok: false, error: 'eval is disabled — set TSG_ENABLE_EVAL=1 to enable arbitrary in-page JS (use snapshot/extract instead where possible)' };
     }
     const value = await state.page.evaluate(js);
     return { ok: true, value };
@@ -1162,7 +1162,7 @@ const actions = {
   },
 
   // Generate a 2FA code from a base32 TOTP secret. Pass the secret via env in
-  // real use (e.g. secret=$KES_TOTP_SECRET); never hard-code it. Then type the
+  // real use (e.g. secret=$TSG_TOTP_SECRET); never hard-code it. Then type the
   // returned code into the 2FA field. `t` (ms) is for testing against vectors.
   async totp({ secret, t }) {
     if (!secret) return { ok: false, error: 'secret required (base32)' };
@@ -1170,12 +1170,12 @@ const actions = {
   },
 
   // One-shot login: fills user/pass (+ optional TOTP 2FA), submits, verifies.
-  // Credentials default to env (KES_USER / KES_PASS / KES_TOTP_SECRET) — never
+  // Credentials default to env (TSG_USER / TSG_PASS / TSG_TOTP_SECRET) — never
   // hard-code them. Pass the field selectors for the specific site.
   async login({ userSelector, passSelector, user, pass, submitSelector, totpSecret, totpSelector, expectText }) {
-    user = user ?? process.env.KES_USER;
-    pass = pass ?? process.env.KES_PASS;
-    totpSecret = totpSecret ?? process.env.KES_TOTP_SECRET;
+    user = user ?? process.env.TSG_USER;
+    pass = pass ?? process.env.TSG_PASS;
+    totpSecret = totpSecret ?? process.env.TSG_TOTP_SECRET;
     const did = [];
     try {
       if (userSelector && user != null) {
@@ -1288,7 +1288,7 @@ const actions = {
   async pdf({ path: p }) {
     let out;
     try {
-      out = p ? containedOutputPath(p) : path.join(os.tmpdir(), `kestrel-${Date.now()}.pdf`);
+      out = p ? containedOutputPath(p) : path.join(os.tmpdir(), `tsaagan-${Date.now()}.pdf`);
     } catch (e) {
       return { ok: false, error: String(e?.message || e) };
     }
@@ -1316,7 +1316,7 @@ const actions = {
     return { ok: passed, passed, checks, url: state.page.url() };
   },
 
-  async record_start({ name = 'kestrel-run' }) {
+  async record_start({ name = 'tsaagan-run' }) {
     state.recording = { name, startedAt: Date.now(), steps: [] };
     return { ok: true, recording: true, name, startedAt: state.recording.startedAt };
   },
@@ -1431,7 +1431,7 @@ function extCall(action, args) {
     setTimeout(() => {
       if (state.ext.pending[id]) {
         delete state.ext.pending[id];
-        resolve({ ok: false, error: 'extension did not respond — is the Kestrel extension loaded and is the target tab active?' });
+        resolve({ ok: false, error: 'extension did not respond — is the Tsaagan extension loaded and is the target tab active?' });
       }
     }, 20000);
   });
@@ -1441,9 +1441,9 @@ const EXT_LOCAL = Array.from(DAEMON_LOCAL_ACTIONS);
 
 async function invokeAction(action, args = {}) {
   // Honor the eval gate in EVERY mode (extension / native / playwright) before routing,
-  // so extension mode can't bypass KES_ENABLE_EVAL.
-  if (action === 'eval' && process.env.KES_ENABLE_EVAL !== '1')
-    return { ok: false, error: 'eval is disabled — set KES_ENABLE_EVAL=1 to allow' };
+  // so extension mode can't bypass TSG_ENABLE_EVAL.
+  if (action === 'eval' && process.env.TSG_ENABLE_EVAL !== '1')
+    return { ok: false, error: 'eval is disabled — set TSG_ENABLE_EVAL=1 to allow' };
   if (state.ext) {
     if (action === 'status')
       return { ok: true, mode: 'extension', ready: state.ready, connected: state.ext.connected, queued: state.ext.queue.length };
@@ -1487,7 +1487,7 @@ const server = http.createServer((req, res) => {
       res.setHeader('Vary', 'Origin');
       res.setHeader('Access-Control-Allow-Private-Network', 'true');
       res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-      res.setHeader('Access-Control-Allow-Headers', 'content-type, x-kestrel-ext-token');
+      res.setHeader('Access-Control-Allow-Headers', 'content-type, x-tsaagan-ext-token');
     }
     if (req.method === 'OPTIONS') {
       // Only answer the preflight for the extension origin; a web page gets no ACAO
@@ -1503,8 +1503,8 @@ const server = http.createServer((req, res) => {
     if (reqOrigin && !isExtOrigin) {
       return json(403, { ok: false, error: 'cross-origin requests are not allowed on the extension bridge' });
     }
-    if (state.ext && req.headers['x-kestrel-ext-token'] !== state.ext.token) {
-      return json(401, { ok: false, error: 'missing or invalid x-kestrel-ext-token — reload the Kestrel companion extension so it picks up the current session token' });
+    if (state.ext && req.headers['x-tsaagan-ext-token'] !== state.ext.token) {
+      return json(401, { ok: false, error: 'missing or invalid x-tsaagan-ext-token — reload the Tsaagan companion extension so it picks up the current session token' });
     }
   } else if (req.headers.origin) {
     // The control plane is for local programs (the CLI, your scripts) that never
@@ -1514,18 +1514,18 @@ const server = http.createServer((req, res) => {
     return json(403, { ok: false, error: 'cross-origin requests are not allowed on the control plane' });
   }
 
-  // Optional shared-secret auth for shared/multi-user hosts. When KES_TOKEN is set,
-  // every control-plane request must carry a matching x-kestrel-token header. The
+  // Optional shared-secret auth for shared/multi-user hosts. When TSG_TOKEN is set,
+  // every control-plane request must carry a matching x-tsaagan-token header. The
   // extension bridge (/ext/*) is exempt (it has its own per-session token, above).
-  // Off unless KES_TOKEN set.
-  if (process.env.KES_TOKEN && !isExt && req.headers['x-kestrel-token'] !== process.env.KES_TOKEN) {
-    return json(401, { ok: false, error: 'missing or invalid x-kestrel-token (KES_TOKEN is set on the daemon)' });
+  // Off unless TSG_TOKEN set.
+  if (process.env.TSG_TOKEN && !isExt && req.headers['x-tsaagan-token'] !== process.env.TSG_TOKEN) {
+    return json(401, { ok: false, error: 'missing or invalid x-tsaagan-token (TSG_TOKEN is set on the daemon)' });
   }
 
   // ---- companion-extension bridge (HTTP long-poll; no extra deps) ----
   if (state.ext && req.url && req.url.startsWith('/ext/')) {
     if (req.method === 'GET' && req.url === '/ext/next') {
-      if (!state.ext.connected) console.log('[kestrel] extension connected (first /ext/next)');
+      if (!state.ext.connected) console.log('[tsaagan] extension connected (first /ext/next)');
       state.ext.connected = true;
       if (state.ext.queue.length) return json(200, state.ext.queue.shift());
       let done = false;
@@ -1554,10 +1554,10 @@ const server = http.createServer((req, res) => {
         try {
           const p = JSON.parse(b || '{}');
           // screenshots arrive as a dataUrl (the extension can't write files) —
-          // persist to ~/.kestrel/shots and hand back a path instead of base64.
+          // persist to ~/.tsaagan/shots and hand back a path instead of base64.
           if (p.result && typeof p.result.dataUrl === 'string' && p.result.dataUrl.startsWith('data:image/')) {
             try {
-              const dir = path.join(os.homedir(), '.kestrel', 'shots');
+              const dir = path.join(os.homedir(), '.tsaagan', 'shots');
               fs.mkdirSync(dir, { recursive: true });
               const f = path.join(dir, `ext-${Date.now()}.png`);
               fs.writeFileSync(f, Buffer.from(p.result.dataUrl.split(',')[1], 'base64'));
@@ -1620,10 +1620,10 @@ const server = http.createServer((req, res) => {
   try {
     await launch();
   } catch (e) {
-    console.error('[kestrel] launch failed:', e?.message || e);
+    console.error('[tsaagan] launch failed:', e?.message || e);
     if (state.mode === 'clone' || state.mode === 'live') {
       console.error(
-        '[kestrel] clone/live mode needs Chrome on ' +
+        '[tsaagan] clone/live mode needs Chrome on ' +
           CDP +
           '. Start Chrome with --remote-debugging-port=9222 first, or use --mode=fresh.'
       );
@@ -1632,13 +1632,13 @@ const server = http.createServer((req, res) => {
   }
   server.on('error', (e) => {
     if (e.code === 'EADDRINUSE') {
-      console.error(`[kestrel] port ${PORT} is already in use — another daemon is likely running. Use a different port (--port=) or stop it first.`);
+      console.error(`[tsaagan] port ${PORT} is already in use — another daemon is likely running. Use a different port (--port=) or stop it first.`);
       process.exit(1);
     }
     throw e;
   });
   server.listen(PORT, '127.0.0.1', () => {
-    console.log(`[kestrel] daemon ready: mode=${state.mode} port=${PORT} url=${state.page ? state.page.url() : '(native — real Chrome)'}`);
+    console.log(`[tsaagan] daemon ready: mode=${state.mode} port=${PORT} url=${state.page ? state.page.url() : '(native — real Chrome)'}`);
   });
 })();
 

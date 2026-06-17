@@ -6,8 +6,8 @@
 //   GROQ_API_KEY=...        node run.js goal="..." [max=16] [mode=fresh|clone] ...
 //   OPENROUTER_API_KEY=...  node run.js goal="..."   # open-source models via OpenRouter
 //
-// For high-stakes work, drive the kestrel verbs yourself (Claude) via the
-// Kestrel skill — you're the sharper navigator. This is for unattended runs.
+// For high-stakes work, drive the tsaagan verbs yourself (Claude) via the
+// Tsaagan skill — you're the sharper navigator. This is for unattended runs.
 
 import { runGoal, ensureDaemon } from './agent.js';
 import { hasLLM } from './lib/llm.js';
@@ -20,14 +20,14 @@ for (const item of rest) {
 }
 const GOAL = args.goal;
 const MAX = parseInt(args.max || '16', 10);
-const PORT = parseInt(process.env.KES_PORT || args.port || '39817', 10);
+const PORT = parseInt(process.env.TSG_PORT || args.port || '39817', 10);
 
 if (!GOAL) {
   console.error('need goal="..."');
   process.exit(1);
 }
 if (!hasLLM()) {
-  console.error('no LLM key — set GROQ_API_KEY or OPENROUTER_API_KEY (or KES_LLM_BASE_URL for a custom endpoint)');
+  console.error('no LLM key — set GROQ_API_KEY or OPENROUTER_API_KEY (or TSG_LLM_BASE_URL for a custom endpoint)');
   process.exit(1);
 }
 

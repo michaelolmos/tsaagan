@@ -6,7 +6,7 @@ import { setKey, getKey, deleteKey, listKeys } from '../lib/vault.js';
 // test is skipped elsewhere to keep CI green without libsecret/DPAPI installed.
 // Uses a unique service name and cleans up so it never touches real keys.
 const RUN = process.platform === 'darwin';
-const SERVICE = 'kestrel-selftest-' + process.pid;
+const SERVICE = 'tsaagan-selftest-' + process.pid;
 const ACCOUNT = 'ci';
 const SECRET = "s3cr3t with spaces, $pecial & 'quotes'"; // exercise shell-sensitive chars
 

@@ -2,7 +2,7 @@
   <rect width="980" height="440" fill="#ffffff"/>
   <rect x="0.5" y="0.5" width="979" height="439" fill="none" stroke="#d0d7de"/>
 
-  <text x="36" y="42" font-size="25" font-weight="700" fill="#1a1a2e">🦅 Kestrel learns from every run</text>
+  <text x="36" y="42" font-size="25" font-weight="700" fill="#1a1a2e">🦖 Tsaagan learns from every run</text>
   <text x="36" y="68" font-size="14" fill="#555">A closed loop — not just memory. Lessons change the next attempt and flow back to the driving agent.</text>
 
   <!-- return arc (feedback) over the top -->
@@ -54,7 +54,7 @@
     <line x1="802" y1="260" x2="840" y2="260"/><polygon points="846,260 836,255 836,265"/>
   </g>
 
-  <text x="36" y="372" font-size="12.5" fill="#555">Before irreversible actions (submit/buy/delete) Kestrel <tspan font-weight="600" fill="#1a1a2e">looks ahead</tspan> — imagines the outcome and skips it if it looks wrong.</text>
+  <text x="36" y="372" font-size="12.5" fill="#555">Before irreversible actions (submit/buy/delete) Tsaagan <tspan font-weight="600" fill="#1a1a2e">looks ahead</tspan> — imagines the outcome and skips it if it looks wrong.</text>
   <text x="36" y="394" font-size="12.5" fill="#555">Procedures are stored <tspan font-weight="600" fill="#1a1a2e">only on validator + structurally-verified success</tspan>, so false positives never poison the skill memory.</text>
-  <text x="36" y="416" font-size="11.5" fill="#777">Memory lives on your machine (~/.kestrel) — not in a model, not in the cloud. Embeddings: zero-dep by default, neural if KES_EMBED_URL / transformers is present.</text>
+  <text x="36" y="416" font-size="11.5" fill="#777">Memory lives on your machine (~/.tsaagan) — not in a model, not in the cloud. Embeddings: zero-dep by default, neural if TSG_EMBED_URL / transformers is present.</text>
 </svg>

@@ -26,7 +26,7 @@ const alive = async () => {
 before(async () => {
   daemon = spawn('node', [path.join(ROOT, 'daemon.js'), `--port=${PORT}`, '--headless=true'], {
     stdio: 'ignore',
-    env: { ...process.env, KES_CONFIRM_CONSEQUENTIAL: '1' },
+    env: { ...process.env, TSG_CONFIRM_CONSEQUENTIAL: '1' },
   });
   // Wait up to ~60s — Chromium cold-start on a loaded CI runner can exceed 20s.
   for (let i = 0; i < 120 && !(await alive()); i++) await new Promise((r) => setTimeout(r, 500));
@@ -99,7 +99,7 @@ test('type submits a form and verifies the resulting text', async () => {
     <p id="out"></p>
   `;
   await bp('goto', { url: `data:text/html,${encodeURIComponent(html)}` });
-  const r = await bp('type', { selector: '#q', text: 'kestrel', submit: true, expectText: 'Submitted: kestrel' });
+  const r = await bp('type', { selector: '#q', text: 'tsaagan', submit: true, expectText: 'Submitted: tsaagan' });
   assert.equal(r.ok, true);
   assert.equal(r.verify.expectTextFound, true);
 });
@@ -112,8 +112,8 @@ test('press verifies post-conditions after keyboard actions', async () => {
     <p id="out"></p>
   `;
   await bp('goto', { url: `data:text/html,${encodeURIComponent(html)}` });
-  await bp('type', { selector: '#q', text: 'kestrel' });
-  const r = await bp('press', { keys: 'Enter', expectText: 'Pressed: kestrel' });
+  await bp('type', { selector: '#q', text: 'tsaagan' });
+  const r = await bp('press', { keys: 'Enter', expectText: 'Pressed: tsaagan' });
   assert.equal(r.ok, true);
   assert.equal(r.verify.expectTextFound, true);
 });

@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/michaelolmos/kestrel/protocol/actions.schema.json",
-  "title": "Kestrel action protocol",
-  "description": "JSON envelopes accepted by the Kestrel daemon control plane.",
+  "$id": "https://github.com/michaelolmos/tsaagan/protocol/actions.schema.json",
+  "title": "Tsaagan action protocol",
+  "description": "JSON envelopes accepted by the Tsaagan daemon control plane.",
   "type": "object",
   "required": ["action"],
   "additionalProperties": false,

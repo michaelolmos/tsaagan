@@ -1,10 +1,10 @@
-// Kestrel SDK — an ergonomic, verify-first programmatic API over the Kestrel
-// daemon. Every call returns a KestrelResult that pairs the data with the
+// Tsaagan SDK — an ergonomic, verify-first programmatic API over the Tsaagan
+// daemon. Every call returns a TsaaganResult that pairs the data with the
 // `verify` block (proof the action worked) — the thing stagehand/browser-use/
 // playwright-mcp make you assert yourself.
 //
-//   import { createKestrel } from 'kestrel/sdk';
-//   const k = await createKestrel();
+//   import { createTsaagan } from 'tsaagan/sdk';
+//   const k = await createTsaagan();
 //   await k.goto('https://example.com', { expectText: 'Example Domain' });
 //   const r = await k.extract('the page heading');
 //   console.log(r.data, r.verify);   // data + proof, together
@@ -33,7 +33,7 @@ const DAEMON = path.join(__dirname, '..', 'daemon.js');
 
 /**
  * @template T
- * @typedef {Object} KestrelResult
+ * @typedef {Object} TsaaganResult
  * @property {boolean} ok
  * @property {T} data            Result payload (snapshot text, extracted data, status fields, ...).
  * @property {VerifyBlock|null} verify  Proof-of-effect for mutating actions (null for pure reads).
@@ -44,7 +44,7 @@ const DAEMON = path.join(__dirname, '..', 'daemon.js');
 
 const INTERNAL = new Set(['ok', 'error', 'verify', 'cacheHit', '_cacheHit']);
 
-export class Kestrel {
+export class Tsaagan {
   /**
    * @param {Object} [opts]
    * @param {number} [opts.port=39817]      Daemon control-plane port.
@@ -52,17 +52,17 @@ export class Kestrel {
    * @param {string} [opts.mode='fresh']    Daemon mode when auto-starting.
    * @param {boolean} [opts.headless=true]  Run the auto-started daemon headless.
    * @param {number} [opts.timeoutMs=60000] Per-call timeout.
-   * @param {string} [opts.token]           x-kestrel-token (or KES_TOKEN env).
+   * @param {string} [opts.token]           x-tsaagan-token (or TSG_TOKEN env).
    */
   constructor(opts = {}) {
-    this.port = opts.port || parseInt(process.env.KES_PORT || '39817', 10);
+    this.port = opts.port || parseInt(process.env.TSG_PORT || '39817', 10);
     this.base = `http://127.0.0.1:${this.port}`;
     this.autoStart = opts.autoStart !== false;
     this.mode = opts.mode || 'fresh';
     this.headless = opts.headless !== false;
     this.timeoutMs = opts.timeoutMs || 60000;
-    const token = opts.token || process.env.KES_TOKEN;
-    this.auth = token ? { 'x-kestrel-token': token } : {};
+    const token = opts.token || process.env.TSG_TOKEN;
+    this.auth = token ? { 'x-tsaagan-token': token } : {};
     this._ensured = null;
   }
 
@@ -87,9 +87,9 @@ export class Kestrel {
     if (this._ensured) return this._ensured;
     this._ensured = (async () => {
       if (await this.alive()) return true;
-      if (!this.autoStart) throw new Error(`no Kestrel daemon on ${this.base} (autoStart is off)`);
+      if (!this.autoStart) throw new Error(`no Tsaagan daemon on ${this.base} (autoStart is off)`);
       if (!fs.existsSync(DAEMON)) throw new Error(`daemon not found at ${DAEMON}`);
-      const logDir = path.join(os.homedir(), '.kestrel');
+      const logDir = path.join(os.homedir(), '.tsaagan');
       fs.mkdirSync(logDir, { recursive: true });
       const out = fs.openSync(path.join(logDir, 'daemon.log'), 'a');
       const dArgs = [DAEMON, `--port=${this.port}`, `--mode=${this.mode}`];
@@ -99,14 +99,14 @@ export class Kestrel {
         await new Promise((r) => setTimeout(r, 300));
         if (await this.alive()) return true;
       }
-      throw new Error('daemon did not become ready; see ~/.kestrel/daemon.log');
+      throw new Error('daemon did not become ready; see ~/.tsaagan/daemon.log');
     })();
     return this._ensured;
   }
 
   /**
-   * Send one { action, args } and wrap the response as a KestrelResult.
-   * @returns {Promise<KestrelResult<any>>}
+   * Send one { action, args } and wrap the response as a TsaaganResult.
+   * @returns {Promise<TsaaganResult<any>>}
    */
   async raw(action, args = {}) {
     await this.ready();
@@ -212,11 +212,11 @@ export class Kestrel {
   async close() {}
 }
 
-/** Construct a Kestrel client and ensure the daemon is ready. */
-export async function createKestrel(opts = {}) {
-  const k = new Kestrel(opts);
+/** Construct a Tsaagan client and ensure the daemon is ready. */
+export async function createTsaagan(opts = {}) {
+  const k = new Tsaagan(opts);
   await k.ready();
   return k;
 }
 
-export default Kestrel;
+export default Tsaagan;

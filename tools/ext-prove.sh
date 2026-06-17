@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# Waits for the Kestrel companion extension to connect, then runs a trusted-click
+# Waits for the Tsaagan companion extension to connect, then runs a trusted-click
 # proof: goto example.com -> snapshot -> click "More information" by ref ->
 # eval location.href to confirm real navigation (isTrusted, no coordinate math).
 set -u
-PORT="${KES_PORT:-39817}"
+PORT="${TSG_PORT:-39817}"
 URL="http://127.0.0.1:${PORT}"
 post() { curl -s -m 30 -X POST "$URL/" -H 'content-type: application/json' -d "$1"; }
 
-echo "[prove] waiting for extension to connect (reload the Kestrel card in chrome://extensions)..."
+echo "[prove] waiting for extension to connect (reload the Tsaagan card in chrome://extensions)..."
 connected=false
 for i in $(seq 1 120); do            # up to ~3 min
   s=$(post '{"action":"status","args":{}}')

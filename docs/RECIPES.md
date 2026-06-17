@@ -1,24 +1,24 @@
 # Recipes
 
-Copy-paste patterns. `kestrel` = `node kestrel.js` (add an alias). Every command
+Copy-paste patterns. `tsaagan` = `node tsaagan.js` (add an alias). Every command
 prints JSON; read the `verify` block to confirm each step worked.
 
 ## The core loop
 
 ```bash
-kestrel start
-kestrel goto url=https://example.com expectText="Example"
-kestrel snapshot                         # → elements with [ref=eN]
-kestrel click ref=e6 expectText="Welcome"
-kestrel stop
+tsaagan start
+tsaagan goto url=https://example.com expectText="Example"
+tsaagan snapshot                         # → elements with [ref=eN]
+tsaagan click ref=e6 expectText="Welcome"
+tsaagan stop
 ```
 
 ## Search a site and read the result
 
 ```bash
-kestrel goto url=https://www.wikipedia.org
-kestrel type selector="#searchInput" text="Alan Turing" submit=true expectText="Turing"
-kestrel extract                          # cleaned page text
+tsaagan goto url=https://www.wikipedia.org
+tsaagan type selector="#searchInput" text="Alan Turing" submit=true expectText="Turing"
+tsaagan extract                          # cleaned page text
 ```
 
 ## Log in with username + password + 2FA
@@ -26,49 +26,49 @@ kestrel extract                          # cleaned page text
 Keep secrets in env or Keychain — never in the repo or a command you commit.
 
 ```bash
-export KES_USER="me@example.com" KES_PASS="…" KES_TOTP_SECRET="BASE32SECRET"
-kestrel goto url=https://app.example.com/login
-kestrel login userSelector="#email" passSelector="#password" \
+export TSG_USER="me@example.com" TSG_PASS="…" TSG_TOTP_SECRET="BASE32SECRET"
+tsaagan goto url=https://app.example.com/login
+tsaagan login userSelector="#email" passSelector="#password" \
               submitSelector="button[type=submit]" \
               totpSelector="#otp" expectText="Dashboard"
 # or pull a secret from the macOS Keychain:
-kestrel keychain service=app.example.com account=me@example.com   # → { secret }
+tsaagan keychain service=app.example.com account=me@example.com   # → { secret }
 ```
 
 ## Authenticated dashboard with no public API
 
 ```bash
 # Start your real Chrome with a debug port (you stay logged in), then:
-kestrel start mode=clone
-kestrel goto url=https://dash.example.com
-kestrel snapshot
-kestrel click ref=e12 expectText="Settings"
+tsaagan start mode=clone
+tsaagan goto url=https://dash.example.com
+tsaagan snapshot
+tsaagan click ref=e12 expectText="Settings"
 ```
 
 ## Discover and reuse a site's internal API
 
 ```bash
-kestrel goto url=https://app.example.com/reports
-kestrel network filter=/api/            # see the XHR/fetch calls the UI makes
-kestrel eval js="fetch('/api/v1/reports',{credentials:'include'}).then(r=>r.text())"
+tsaagan goto url=https://app.example.com/reports
+tsaagan network filter=/api/            # see the XHR/fetch calls the UI makes
+tsaagan eval js="fetch('/api/v1/reports',{credentials:'include'}).then(r=>r.text())"
 ```
 
-## Teach Kestrel a site once (it also auto-learns)
+## Teach Tsaagan a site once (it also auto-learns)
 
 ```bash
-kestrel remember key=search selector="#searchInput" note="main search box"
+tsaagan remember key=search selector="#searchInput" note="main search box"
 # next session, same domain — no selector needed:
-kestrel type key=search text="hello" submit=true     # → cacheHit:true
-kestrel recall                                        # what it knows about this domain
+tsaagan type key=search text="hello" submit=true     # → cacheHit:true
+tsaagan recall                                        # what it knows about this domain
 ```
 
 ## Canvas / visual UI (no accessibility tree)
 
 ```bash
-kestrel snapshot mode=vision             # numbered overlay + screenshot + marks
-kestrel click som=42 expectText="Open"   # click element #42
+tsaagan snapshot mode=vision             # numbered overlay + screenshot + marks
+tsaagan click som=42 expectText="Open"   # click element #42
 # or pure coordinates:
-kestrel click_xy x=640 y=320
+tsaagan click_xy x=640 y=320
 ```
 
 ## A site that ignores synthetic input
@@ -81,57 +81,57 @@ if you hit a CAPTCHA or anti-abuse wall, stop and hand off.)
 
 ```bash
 brew install cliclick                     # one-time (macOS)
-kestrel start mode=native                 # real Chrome, no CDP
-kestrel snapshot                          # AppleScript perception (i= indices + coords)
-kestrel paste text="some text" submit=true   # real ⌘V + Return (isTrusted)
-kestrel pace set=human                    # polite, human cadence for this domain
+tsaagan start mode=native                 # real Chrome, no CDP
+tsaagan snapshot                          # AppleScript perception (i= indices + coords)
+tsaagan paste text="some text" submit=true   # real ⌘V + Return (isTrusted)
+tsaagan pace set=human                    # polite, human cadence for this domain
 ```
 
 ## Files: upload & download
 
 ```bash
-kestrel upload_file selector="input[type=file]" path=/Users/me/a.png,/Users/me/b.png
-kestrel click ref=e9                       # triggers a download
-kestrel downloads                          # → saved file paths in ~/.kestrel/downloads
-kestrel pdf path=/tmp/report.pdf           # save the page as PDF (headless)
+tsaagan upload_file selector="input[type=file]" path=/Users/me/a.png,/Users/me/b.png
+tsaagan click ref=e9                       # triggers a download
+tsaagan downloads                          # → saved file paths in ~/.tsaagan/downloads
+tsaagan pdf path=/tmp/report.pdf           # save the page as PDF (headless)
 ```
 
 ## Multi-tab, dialogs, cookie banners
 
 ```bash
-kestrel dismiss_overlays                   # accept/close cookie + consent banners
-kestrel handle_dialog accept=true          # auto-accept JS confirm/alert/prompt
-kestrel new_tab url=https://example.org
-kestrel tabs                               # list; switch_tab index=1
+tsaagan dismiss_overlays                   # accept/close cookie + consent banners
+tsaagan handle_dialog accept=true          # auto-accept JS confirm/alert/prompt
+tsaagan new_tab url=https://example.org
+tsaagan tabs                               # list; switch_tab index=1
 ```
 
 ## Fully autonomous (Groq brain, no agent framework)
 
 ```bash
 export GROQ_API_KEY=…
-kestrel run goal="go to news.ycombinator.com and report the #1 story title"
+tsaagan run goal="go to news.ycombinator.com and report the #1 story title"
 # or run it as a standalone server and POST goals:
-kestrel serve port=39820
+tsaagan serve port=39820
 curl -s localhost:39820/goal -H 'content-type: application/json' -d '{"goal":"…","max":16}'
 ```
 
 ## Verify like you mean it
 
 ```bash
-kestrel click ref=e3 expectText="Saved"    # action self-verifies
-kestrel assert text="Saved" url="/success" # explicit pass/fail check
-kestrel console_log                        # recent console errors (debugging)
+tsaagan click ref=e3 expectText="Saved"    # action self-verifies
+tsaagan assert text="Saved" url="/success" # explicit pass/fail check
+tsaagan console_log                        # recent console errors (debugging)
 ```
 
 ## Record, replay, and audit a verified workflow
 
 ```bash
-kestrel record_start name=weekly-report
-kestrel goto url=https://example.com expectText="Example"
-kestrel click ref=e6 expectText="IANA"
-kestrel record_stop                         # returns { path, steps }
-kestrel replay path=/Users/me/.kestrel/records/...
-kestrel report format=md                    # returns { path, summary }
+tsaagan record_start name=weekly-report
+tsaagan goto url=https://example.com expectText="Example"
+tsaagan click ref=e6 expectText="IANA"
+tsaagan record_stop                         # returns { path, steps }
+tsaagan replay path=/Users/me/.tsaagan/records/...
+tsaagan report format=md                    # returns { path, summary }
 ```
 
 Only successful actions with structural verification evidence are captured for

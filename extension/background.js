@@ -1,18 +1,18 @@
-// Kestrel Companion — MV3 service worker.
-// Long-polls the Kestrel daemon (mode=extension) for commands and executes them
+// Tsaagan Companion — MV3 service worker.
+// Long-polls the Tsaagan daemon (mode=extension) for commands and executes them
 // against the ACTIVE tab using chrome.debugger Input (isTrusted=true) at VIEWPORT
 // coordinates — so there is NO screen/monitor/DPI coordinate math, and it works on
 // the user's real, logged-in Chrome with no debug port. Attaches/detaches the
 // debugger per action burst (the "debugging this tab" banner shows only briefly).
 
-const DAEMON = `http://127.0.0.1:${self.KESTREL_PORT || 39817}`;
+const DAEMON = `http://127.0.0.1:${self.TSAAGAN_PORT || 39817}`;
 
 // Per-session bridge token. `ext-setup` writes ext-token.js (which sets
-// self.KESTREL_EXT_TOKEN) into this extension dir before Chrome loads the
+// self.TSAAGAN_EXT_TOKEN) into this extension dir before Chrome loads the
 // extension; importing it is best-effort so the worker still loads if absent.
 try { importScripts('ext-token.js'); } catch {}
-const EXT_TOKEN = self.KESTREL_EXT_TOKEN || '';
-const EXT_HEADERS = EXT_TOKEN ? { 'x-kestrel-ext-token': EXT_TOKEN } : {};
+const EXT_TOKEN = self.TSAAGAN_EXT_TOKEN || '';
+const EXT_HEADERS = EXT_TOKEN ? { 'x-tsaagan-ext-token': EXT_TOKEN } : {};
 
 function dbg(tabId, method, params) {
   return new Promise((resolve, reject) =>
@@ -261,7 +261,7 @@ async function handle(cmd) {
     if (action === 'forward') { await chrome.tabs.goForward(t.id); return { ok: true }; }
     if (action === 'screenshot') {
       const dataUrl = await chrome.tabs.captureVisibleTab(t.windowId, { format: 'png' });
-      return { ok: true, dataUrl }; // daemon saves it to ~/.kestrel/shots and returns the path
+      return { ok: true, dataUrl }; // daemon saves it to ~/.tsaagan/shots and returns the path
     }
     if (action === 'wait_for') {
       const timeout = +args.timeout || 15000;
@@ -357,7 +357,7 @@ chrome.runtime.onStartup.addListener(() => loop());
 // long-poll. A short alarm wakes the worker and re-arms the loop (loop() is a
 // no-op while already running, so this only matters after a suspend).
 try {
-  chrome.alarms.create('kestrel-keepalive', { periodInMinutes: 0.4 });
+  chrome.alarms.create('tsaagan-keepalive', { periodInMinutes: 0.4 });
   chrome.alarms.onAlarm.addListener(() => loop());
 } catch {}
 loop();
