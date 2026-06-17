@@ -28,7 +28,8 @@ before(async () => {
     stdio: 'ignore',
     env: { ...process.env, KES_CONFIRM_CONSEQUENTIAL: '1' },
   });
-  for (let i = 0; i < 60 && !(await alive()); i++) await new Promise((r) => setTimeout(r, 300));
+  // Wait up to ~60s — Chromium cold-start on a loaded CI runner can exceed 20s.
+  for (let i = 0; i < 120 && !(await alive()); i++) await new Promise((r) => setTimeout(r, 500));
   assert.ok(await alive(), 'daemon should become ready');
 });
 
