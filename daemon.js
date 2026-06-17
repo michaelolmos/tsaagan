@@ -1388,6 +1388,10 @@ const DAEMON_LOCAL_ACTIONS = new Set(['stop', 'totp', 'record_start', 'record_st
 const EXT_LOCAL = Array.from(DAEMON_LOCAL_ACTIONS);
 
 async function invokeAction(action, args = {}) {
+  // Honor the eval gate in EVERY mode (extension / native / playwright) before routing,
+  // so extension mode can't bypass KES_ENABLE_EVAL.
+  if (action === 'eval' && process.env.KES_ENABLE_EVAL !== '1')
+    return { ok: false, error: 'eval is disabled — set KES_ENABLE_EVAL=1 to allow' };
   if (state.ext) {
     if (action === 'status')
       return { ok: true, mode: 'extension', ready: state.ready, connected: state.ext.connected, queued: state.ext.queue.length };
@@ -1456,8 +1460,14 @@ const server = http.createServer((req, res) => {
     }
     if (req.method === 'POST' && req.url === '/ext/result') {
       let b = '';
-      req.on('data', (c) => (b += c));
+      let tooBig = false;
+      req.on('data', (c) => {
+        if (tooBig) return;
+        b += c;
+        if (b.length > 64_000_000) { tooBig = true; json(413, { ok: false, error: 'ext result too large' }); req.destroy(); }
+      });
       req.on('end', () => {
+        if (tooBig) return;
         try {
           const p = JSON.parse(b || '{}');
           // screenshots arrive as a dataUrl (the extension can't write files) —

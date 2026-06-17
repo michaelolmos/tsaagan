@@ -62,6 +62,7 @@ kestrel snapshot                      # interactive elements + stable refs (data
 kestrel click ref=5                   # trusted click at viewport coords
 kestrel type ref=3 text="hello@x.com" submit=true
 kestrel press keys="Meta+Enter"       # trusted key combo
+kestrel upload_file ref=5 path=/abs/a.png,/abs/b.png  # trusted file upload via CDP DOM.setFileInputFiles
 kestrel scroll direction=down         # or to_text="pricing" (re-snapshot after)
 kestrel wait_for text="Welcome"       # or url=… / selector=… [timeout=15000]
 kestrel screenshot                    # saved to ~/.kestrel/shots/, returns the path
@@ -96,6 +97,11 @@ listener read **`event.isTrusted === true`** → second click navigated to
 - `eval` runs in the page's MAIN world and is subject to the page's CSP — it may be
   blocked on strict sites (e.g. Gmail). `snapshot` / `click` / `type` / `extract`
   don't depend on it.
+- `upload_file` resolves the `<input type=file>` by `ref=`/`selector=` and sets it via
+  CDP `DOM.setFileInputFiles` (files arrive `isTrusted=true`). Paths are local to the
+  machine running Chrome; comma-separate for multi-file. Some Chromium builds reject
+  the CDP call with `-32000 "Not allowed"` on certain pages — if that happens, use
+  `native` (macOS) or Playwright mode for that upload.
 - Transport is HTTP long-poll on `127.0.0.1` — nothing leaves your machine.
 - MV3 service workers can be evicted when idle; the poll loop keeps it alive during
   use and auto-reconnects.

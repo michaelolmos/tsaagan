@@ -40,8 +40,14 @@ const server = http.createServer((req, res) => {
   if (req.method === 'GET' && req.url === '/journal') return reply(200, { ok: true, runs: recentJournal(10) });
   if (req.method === 'POST' && req.url === '/goal') {
     let body = '';
-    req.on('data', (c) => (body += c));
+    let tooBig = false;
+    req.on('data', (c) => {
+      if (tooBig) return;
+      body += c;
+      if (body.length > 2_000_000) { tooBig = true; reply(413, { ok: false, error: 'request body too large' }); req.destroy(); }
+    });
     req.on('end', async () => {
+      if (tooBig) return;
       let p = {};
       try {
         p = JSON.parse(body || '{}');

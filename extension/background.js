@@ -129,7 +129,7 @@ async function handle(cmd) {
   if (!t) return { ok: false, error: 'no active tab' };
   // Page-content actions need a real web page; chrome://, chrome-extension://,
   // devtools://, the Web Store, etc. can't be scripted — fail fast with a clear msg.
-  const NEEDS_PAGE = new Set(['snapshot', 'click', 'click_xy', 'type', 'paste', 'extract', 'eval', 'scroll', 'press']);
+  const NEEDS_PAGE = new Set(['snapshot', 'click', 'click_xy', 'type', 'paste', 'extract', 'eval', 'scroll', 'press', 'upload_file']);
   if (NEEDS_PAGE.has(action) && !/^(https?|file):/.test(t.url || '')) {
     return { ok: false, error: 'active tab is not a scriptable web page: ' + (t.url || '(none)') };
   }
@@ -157,6 +157,50 @@ async function handle(cmd) {
       }
       await trustedType(t.id, args.text || '', !!args.submit);
       return { ok: true, trusted: true };
+    }
+    if (action === 'upload_file') {
+      // Trusted file upload: resolve the <input type=file> (by data-kref ref or
+      // selector), then call CDP DOM.setFileInputFiles so the files arrive with
+      // isTrusted=true (JS-set .files / DataTransfer can't do that). Paths are
+      // local to the machine running Chrome; comma-separated = multi-file.
+      const filePaths = String(args.path || '').split(',').map((p) => p.trim()).filter(Boolean);
+      if (!filePaths.length) return { ok: false, error: 'no file paths provided (path= required)' };
+      // Mark the target input with a unique attribute so CDP can re-find it after
+      // we switch from the scripting world into the debugger world.
+      const mark = 'k' + Math.random().toString(36).slice(2);
+      const rf = args.ref != null && /^\d+$/.test(String(args.ref)) ? String(args.ref) : null;
+      const [{ result: found }] = await chrome.scripting.executeScript({
+        target: { tabId: t.id },
+        func: (sel, rfi, m) => {
+          let el = null;
+          if (rfi) el = document.querySelector('[data-kref="' + rfi + '"]');
+          if (!el && sel) el = document.querySelector(sel);
+          if (!el) return null;
+          el.setAttribute('data-kupload', m);
+          return { tag: el.tagName, type: el.type };
+        },
+        args: [args.selector || null, rf, mark],
+      });
+      if (!found) return { ok: false, error: 'element not found (snapshot first; use ref=/selector=)' };
+      if (found.tag !== 'INPUT' || found.type !== 'file')
+        return { ok: false, error: `target is not <input type=file> (got <${found.tag.toLowerCase()} type="${found.type}">)` };
+      await attach(t.id);
+      try {
+        await dbg(t.id, 'DOM.enable');
+        const { root } = await dbg(t.id, 'DOM.getDocument', { depth: 0 });
+        const { nodeId } = await dbg(t.id, 'DOM.querySelector', { nodeId: root.nodeId, selector: `input[data-kupload="${mark}"]` });
+        if (!nodeId) return { ok: false, error: 'CDP could not locate the input (DOM changed?)' };
+        await dbg(t.id, 'DOM.setFileInputFiles', { nodeId, files: filePaths });
+        return { ok: true, uploaded: filePaths, trusted: true };
+      } finally {
+        await detach(t.id);
+        // Best-effort cleanup of the marker attribute.
+        chrome.scripting.executeScript({
+          target: { tabId: t.id },
+          func: (m) => { const el = document.querySelector(`input[data-kupload="${m}"]`); if (el) el.removeAttribute('data-kupload'); },
+          args: [mark],
+        }).catch(() => {});
+      }
     }
     if (action === 'extract') {
       const [{ result }] = await chrome.scripting.executeScript({

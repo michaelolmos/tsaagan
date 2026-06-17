@@ -57,7 +57,7 @@ async function callTool(name, args = {}) {
     try {
       const data = fs.readFileSync(file).toString('base64');
       try { fs.unlinkSync(file); } catch {}
-      return { content: [{ type: 'image', data, mimeType: 'image/png' }], structuredContent: { path: file } };
+      return { content: [{ type: 'image', data, mimeType: 'image/png' }] };
     } catch (e) {
       return { content: [{ type: 'text', text: `screenshot saved to ${file} but could not be read: ${String(e?.message || e)}` }], isError: true };
     }

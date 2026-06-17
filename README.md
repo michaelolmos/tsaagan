@@ -207,7 +207,7 @@ other tool lacks — structural proof that each action worked — is Kestrel's c
 
 ✅ supported · ⚠️ partial/workaround · ❌ not supported
 
-> **Honest notes.** Kestrel is young — fewer stars, no Python client yet, no hosted
+> **Honest notes.** Kestrel is young — fewer stars and no hosted
 > option, and its benchmark number is still being run (published scores across tools
 > use different WebVoyager task subsets and aren't directly comparable). What it
 > uniquely offers: proof-of-success on every action, an API-first fast path, a local

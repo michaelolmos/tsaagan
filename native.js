@@ -90,7 +90,7 @@ async function setURL(url) {
   if (PLATFORM === 'darwin')
     return osa(`tell application "Google Chrome" to set URL of active tab of ${winRef()} to ${JSON.stringify(url)}`);
   if (PLATFORM === 'linux') return sh('xdg-open', [url]);
-  if (PLATFORM === 'win32') return ps(`Start-Process '${url}'`);
+  if (PLATFORM === 'win32') return sh('powershell', ['-NoProfile', '-Command', 'Start-Process $args[0]', url]);
 }
 async function activateBrowser() {
   if (PLATFORM === 'darwin') {
@@ -362,6 +362,27 @@ export function makeNativeActions(state) {
       const out = p || path.join(os.tmpdir(), `kestrel-native-${Date.now()}.png`);
       await screenshot(out);
       return { ok: true, path: out };
+    },
+    // Upload a file by driving the macOS native Open dialog with the keyboard:
+    // Cmd+Shift+G ("Go to Folder") → paste the absolute path → Return (navigate)
+    // → Return (confirm/Open). CALL ORDER: the file picker must already be OPEN
+    // before calling this — first `click` (or click_xy) the page's upload control,
+    // THEN call upload_file. macOS-only (no AppleScript/key-driver path elsewhere).
+    async upload_file({ path: filePath }) {
+      if (PLATFORM !== 'darwin') return { ok: false, error: 'upload_file is macOS-only in native mode (use extension or Playwright mode otherwise)' };
+      if (!filePath) return { ok: false, error: 'path= (absolute file path) is required' };
+      await activateBrowser();
+      await new Promise((r) => setTimeout(r, 300));
+      // key code 5 = G; Cmd+Shift+G opens "Go to Folder" in the Open dialog.
+      await osa('tell application "System Events" to key code 5 using {command down, shift down}');
+      await new Promise((r) => setTimeout(r, 500)); // let the Go-to sheet animate in
+      await paste(filePath); // clipboard paste avoids keyboard-layout issues with paths
+      await new Promise((r) => setTimeout(r, 300));
+      await pressKey('return'); // navigate to / resolve the path
+      await new Promise((r) => setTimeout(r, 600));
+      await pressKey('return'); // confirm the selection / Open
+      await new Promise((r) => setTimeout(r, 800));
+      return { ok: true, uploaded: filePath };
     },
     async stop() {
       setTimeout(() => process.exit(0), 50);
