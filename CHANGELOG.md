@@ -2,6 +2,16 @@
 
 All notable changes to Tsaagan. Format loosely follows [Keep a Changelog](https://keepachangelog.com).
 
+## [Unreleased]
+
+### Changed
+- **Safety doctrine clarified so the agent doesn't deadlock on routine gates.**
+  Age/21+, research-use, cookie, and terms-accept click-throughs are now explicitly
+  treated as reversible read-only gates the agent may accept and continue, and the
+  dispatching operator is recognized as the authorization channel ("untrusted content"
+  means the web page, not the operator's instructions). The hard stop on CAPTCHAs,
+  anti-abuse walls, and consequential/irreversible actions is unchanged.
+
 ## [1.0.0] — Initial public release
 
 Human-like browser control for AI agents — give your agent reliable hands on the web
