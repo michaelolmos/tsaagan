@@ -26,9 +26,13 @@ function parseArgs(list) {
       continue;
     }
     let [, k, v] = m;
+    // `text` is literal keystrokes and must never be coerced — an OTP typed as
+    // text=629288 was arriving as a JS number and failing digit fields. Same for
+    // any leading-zero string: "012345" is a code or a zip, never the number 12345.
+    const literal = k === 'text' || /^-?0\d/.test(v);
     if (v === 'true') v = true;
     else if (v === 'false') v = false;
-    else if (/^-?\d+$/.test(v)) v = parseInt(v, 10);
+    else if (!literal && /^-?\d+$/.test(v)) v = parseInt(v, 10);
     args[k] = v;
   }
   return args;
