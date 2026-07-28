@@ -4,6 +4,14 @@ All notable changes to Tsaagan. Format loosely follows [Keep a Changelog](https:
 
 ## [Unreleased]
 
+### Fixed
+- **`text=` values are no longer coerced to numbers.** `parseArgs` turned any
+  digit-string into a JS number, so typing a one-time passcode with
+  `text=629288` sent a number to the field and failed. Leading zeros were lost
+  silently — `text=012345` arrived as `12345`. `text` is now always treated as
+  literal keystrokes, and any leading-zero value (a code, a zip) stays a string.
+  Booleans and genuinely numeric args such as `port` are unchanged.
+
 ### Changed
 - **Safety doctrine clarified so the agent doesn't deadlock on routine gates.**
   Age/21+, research-use, cookie, and terms-accept click-throughs are now explicitly
