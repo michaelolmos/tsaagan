@@ -4,6 +4,15 @@ All notable changes to Tsaagan. Format loosely follows [Keep a Changelog](https:
 
 ## [Unreleased]
 
+### Added
+- **AGENTS.md: "Steering a running mission" doctrine for orchestrators.** Relaying
+  corrections into a dispatched agent's session mid-mission is unreliable: agents can
+  acknowledge without resuming work (verify new tool evidence before trusting a
+  relay reply), and urgency-framed messages ("you have N minutes") pattern-match
+  fabricated time pressure and get disregarded by injection defenses. State operator
+  facts plainly; if mission parameters genuinely changed, stop the agent and
+  re-dispatch fresh with an updated brief.
+
 ### Fixed
 - **`text=` values are no longer coerced to numbers.** `parseArgs` turned any
   digit-string into a JS number, so typing a one-time passcode with
