@@ -69,3 +69,21 @@ use Tsaagan well. Read [SOUL.md](SOUL.md) for *why*; this is *how*.
 
 Report what you did, the **verify evidence** for each step (final URL, confirmed
 text/state), anything you couldn't complete and why, and any extracted data.
+
+## Steering a running mission (for orchestrators)
+
+Relaying corrections into an agent's session mid-mission is unreliable. Two
+failure modes, observed in production:
+
+- **Ack-without-action** — the agent replies "continuing in the background" and
+  ends its turn with no browser work done. A reply with no new tool evidence
+  means the mission did NOT resume; verify work actually restarted before
+  trusting it.
+- **Urgency framing trips injection defenses** — "you have N minutes, the clock
+  is running" pattern-matches fabricated time pressure (page content can say the
+  same thing), so a well-defended agent disregards it. State operator facts
+  plainly, without pressure framing.
+
+The original dispatch brief is the only reliably-honored instruction set. If
+mission parameters genuinely changed, stop the agent and re-dispatch fresh with
+an updated brief instead of relaying corrections.
