@@ -360,6 +360,8 @@ if (cmd === 'start') {
       'tsaagan tabs | switch_tab index=1 | new_tab url=.. | close_tab [index=]',
       'tsaagan back | forward | console_log [limit=20] | screenshot [path=..] [fullPage=true]',
       'tsaagan record_start name=.. | record_stop [path=..] | replay path=.. | report [format=json|md]',
+      'tsaagan screencast_start [quality=60] [maxWidth=1280] [maxHeight=800] | screencast_status | screencast_stop',
+      '             live viewport — subscribe: curl -N http://127.0.0.1:39817/screencast/stream',
       'tsaagan stop',
       '— diagnostics —     tsaagan doctor   |   tsaagan protocol',
       '— extension mode —  tsaagan ext-setup [browser=chrome] [profile=clone]   (zero-step trusted input)',

@@ -138,6 +138,8 @@ const state = {
   // Wave C: per-domain action cache + learned site memory
   cache: {}, // domain -> { "intent": {selector, role, name, hits, ts} }
   memoryDir: path.join(HOME_KES, 'memory'),
+  // Live viewport: CDP screencast → SSE subscribers (see screencast_start).
+  screencast: null, // {cdp, page, frames, last, lastAt, subs:Set<res>, opts, heartbeat, startedAt}
 };
 fs.mkdirSync(state.downloadDir, { recursive: true });
 fs.mkdirSync(state.recordsDir, { recursive: true });
@@ -784,6 +786,42 @@ async function actWithHeal(target, run, verifyOpts) {
 }
 
 // ---------- actions ----------
+// ---------- screencast helpers ----------
+function clampInt(v, min, max, dflt) {
+  const n = parseInt(v, 10);
+  if (!Number.isFinite(n)) return dflt;
+  return Math.min(max, Math.max(min, n));
+}
+
+function screencastStatus() {
+  const sc = state.screencast;
+  if (!sc) return { running: false };
+  const secs = (Date.now() - sc.startedAt) / 1000;
+  return {
+    running: true,
+    frames: sc.frames,
+    fps: secs > 0 ? Math.round((sc.frames / secs) * 10) / 10 : 0,
+    subscribers: sc.subs.size,
+    lastFrameAgeMs: sc.lastAt ? Date.now() - sc.lastAt : null,
+    opts: sc.opts,
+    url: (() => { try { return sc.page.url(); } catch { return null; } })(),
+  };
+}
+
+// Fan one frame out to every SSE subscriber. A dead socket is dropped rather than
+// allowed to accumulate — an operator closing the panel must not leak memory here.
+function broadcastFrame(sc, kind) {
+  if (!sc.subs.size || !sc.last) return;
+  const payload = JSON.stringify({ kind, ts: sc.lastAt, seq: sc.frames, data: sc.last });
+  for (const res of sc.subs) {
+    try {
+      res.write(`data: ${payload}\n\n`);
+    } catch {
+      sc.subs.delete(res);
+    }
+  }
+}
+
 const actions = {
   async status() {
     return {
@@ -1090,6 +1128,92 @@ const actions = {
     }
     await state.page.screenshot({ path: out, fullPage: !!fullPage });
     return { ok: true, path: out };
+  },
+
+  // ---------- live viewport (screencast) ----------
+  // `screenshot` gives you one frame; this gives you the window. CDP streams JPEG
+  // frames as the page paints, and we fan them out to SSE subscribers on
+  // GET /screencast/stream. Built for an operator watching an agent work — the
+  // consumer is a local program (the control plane refuses browser origins), which
+  // then re-broadcasts to whatever UI is watching.
+  async screencast_start({ quality, maxWidth, maxHeight, everyNthFrame } = {}) {
+    if (!state.page || !state.context?.newCDPSession)
+      return { ok: false, error: 'screencast needs a Playwright page (not available in native/extension mode)' };
+    if (state.screencast) return { ok: true, already: true, ...screencastStatus() };
+
+    const opts = {
+      format: 'jpeg',
+      quality: clampInt(quality, 1, 100, 60),
+      maxWidth: clampInt(maxWidth, 64, 3840, 1280),
+      maxHeight: clampInt(maxHeight, 64, 2160, 800),
+      everyNthFrame: clampInt(everyNthFrame, 1, 10, 1),
+    };
+
+    let cdp;
+    try {
+      cdp = await state.context.newCDPSession(state.page);
+    } catch (e) {
+      return { ok: false, error: `could not open a CDP session: ${String(e?.message || e)}` };
+    }
+
+    const sc = {
+      cdp,
+      page: state.page,
+      frames: 0,
+      last: null,
+      lastAt: 0,
+      subs: new Set(),
+      opts,
+      heartbeat: null,
+      startedAt: Date.now(),
+    };
+
+    cdp.on('Page.screencastFrame', async (evt) => {
+      // Ack FIRST and unconditionally — Chrome stops sending frames until the
+      // previous one is acknowledged, so a throw here would silently freeze the feed.
+      try {
+        await cdp.send('Page.screencastFrameAck', { sessionId: evt.sessionId });
+      } catch {}
+      sc.frames++;
+      sc.last = evt.data;
+      sc.lastAt = Date.now();
+      broadcastFrame(sc, 'frame');
+    });
+
+    // Chrome emits frames only when the page actually repaints, so a static page
+    // looks like a dead feed. Re-send the most recent frame on a slow tick: a late
+    // subscriber gets a picture immediately instead of a blank canvas.
+    sc.heartbeat = setInterval(() => {
+      if (sc.last && Date.now() - sc.lastAt > 900) broadcastFrame(sc, 'keepalive');
+    }, 1000);
+    if (sc.heartbeat.unref) sc.heartbeat.unref();
+
+    try {
+      await cdp.send('Page.startScreencast', opts);
+    } catch (e) {
+      clearInterval(sc.heartbeat);
+      try { await cdp.detach(); } catch {}
+      return { ok: false, error: `startScreencast failed: ${String(e?.message || e)}` };
+    }
+
+    state.screencast = sc;
+    return { ok: true, started: true, opts, stream: `http://127.0.0.1:${PORT}/screencast/stream` };
+  },
+
+  async screencast_status() {
+    return { ok: true, ...screencastStatus() };
+  },
+
+  async screencast_stop() {
+    const sc = state.screencast;
+    if (!sc) return { ok: true, running: false };
+    clearInterval(sc.heartbeat);
+    try { await sc.cdp.send('Page.stopScreencast'); } catch {}
+    try { await sc.cdp.detach(); } catch {}
+    for (const res of sc.subs) { try { res.end(); } catch {} }
+    const frames = sc.frames;
+    state.screencast = null;
+    return { ok: true, stopped: true, frames };
   },
 
   async tabs() {
@@ -1405,6 +1529,11 @@ const actions = {
   },
 
   async stop() {
+    // Tear the viewport down first so subscribers get a clean end rather than a
+    // socket that dies mid-frame.
+    if (state.screencast) {
+      try { await actions.screencast_stop(); } catch {}
+    }
     setTimeout(async () => {
       try {
         await (state.context?.close?.() || state.browser?.close?.());
@@ -1436,7 +1565,12 @@ function extCall(action, args) {
     }, 20000);
   });
 }
-const DAEMON_LOCAL_ACTIONS = new Set(['stop', 'totp', 'record_start', 'record_status', 'record_stop', 'replay', 'report']);
+const DAEMON_LOCAL_ACTIONS = new Set([
+  'stop', 'totp', 'record_start', 'record_status', 'record_stop', 'replay', 'report',
+  // Screencast owns a Playwright CDP session, so it must never be forwarded to the
+  // companion extension the way page verbs are.
+  'screencast_start', 'screencast_status', 'screencast_stop',
+]);
 const EXT_LOCAL = Array.from(DAEMON_LOCAL_ACTIONS);
 
 async function invokeAction(action, args = {}) {
@@ -1575,6 +1709,34 @@ const server = http.createServer((req, res) => {
     }
     if (req.url === '/ext/hello') { state.ext.connected = true; return json(200, { ok: true }); }
     return json(404, { ok: false, error: 'unknown ext endpoint' });
+  }
+
+  // ---- live viewport stream (SSE) ----
+  // Subscribe with `curl -N http://127.0.0.1:PORT/screencast/stream`, or from a local
+  // service that re-broadcasts to a UI. This inherits the loopback Host pin and the
+  // Origin refusal above, so a web page cannot attach to the feed directly.
+  if (req.method === 'GET' && req.url === '/screencast/stream') {
+    const sc = state.screencast;
+    if (!sc) return json(409, { ok: false, error: 'screencast is not running — call screencast_start first' });
+    res.writeHead(200, {
+      'content-type': 'text/event-stream',
+      'cache-control': 'no-cache',
+      connection: 'keep-alive',
+      'x-accel-buffering': 'no',
+    });
+    res.write(`retry: 1000\n\n`);
+    sc.subs.add(res);
+    // Hand the newcomer the current picture immediately rather than making it wait
+    // for the page's next repaint.
+    if (sc.last) {
+      try {
+        res.write(`data: ${JSON.stringify({ kind: 'snapshot', ts: sc.lastAt, seq: sc.frames, data: sc.last })}\n\n`);
+      } catch {}
+    }
+    const drop = () => { sc.subs.delete(res); };
+    req.on('close', drop);
+    req.on('error', drop);
+    return;
   }
 
   if (req.method !== 'POST') {
