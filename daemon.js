@@ -803,6 +803,11 @@ function screencastStatus() {
     fps: secs > 0 ? Math.round((sc.frames / secs) * 10) / 10 : 0,
     subscribers: sc.subs.size,
     lastFrameAgeMs: sc.lastAt ? Date.now() - sc.lastAt : null,
+    // The viewport's CSS geometry, straight from the last frame. Callers that want
+    // to aim a normalized click need this, and it is the only trustworthy source.
+    viewport: sc.lastMeta
+      ? { width: sc.lastMeta.deviceWidth, height: sc.lastMeta.deviceHeight, scrollX: sc.lastMeta.scrollOffsetX, scrollY: sc.lastMeta.scrollOffsetY }
+      : null,
     opts: sc.opts,
     url: (() => { try { return sc.page.url(); } catch { return null; } })(),
   };
@@ -1163,6 +1168,7 @@ const actions = {
       last: null,
       lastAt: 0,
       subs: new Set(),
+      lastMeta: null,
       opts,
       heartbeat: null,
       startedAt: Date.now(),
@@ -1176,6 +1182,11 @@ const actions = {
       } catch {}
       sc.frames++;
       sc.last = evt.data;
+      // Keep the frame's own geometry: it carries the viewport's CSS size, which is
+      // what turns a normalized click from a watching operator back into page
+      // coordinates. Never do that math from the image's pixel dimensions — the
+      // frame is scaled to maxWidth and the display may be scaled again.
+      sc.lastMeta = evt.metadata || null;
       sc.lastAt = Date.now();
       broadcastFrame(sc, 'frame');
     });
@@ -1202,6 +1213,58 @@ const actions = {
 
   async screencast_status() {
     return { ok: true, ...screencastStatus() };
+  },
+
+  // Human takeover. A person watching the live viewport reaches in and drives the
+  // page directly — the operator escape hatch every serious agent-browser product
+  // has (Operator calls it takeover mode).
+  //
+  // Coordinates arrive NORMALIZED (nx/ny in 0..1 of the viewport) and are resolved
+  // here against the last frame's own deviceWidth/deviceHeight. That deliberately
+  // keeps DPI, image scaling and canvas layout out of the wire format — the caller
+  // cannot get the math wrong because it never does the math.
+  async screencast_input({ type, nx, ny, button, clickCount, deltaX, deltaY, key, code, text, modifiers } = {}) {
+    const sc = state.screencast;
+    if (!sc) return { ok: false, error: 'screencast is not running' };
+
+    const KEY_TYPES = new Set(['keyDown', 'keyUp', 'rawKeyDown', 'char']);
+    const MOUSE_TYPES = new Set(['mousePressed', 'mouseReleased', 'mouseMoved', 'mouseWheel']);
+
+    try {
+      if (KEY_TYPES.has(type)) {
+        await sc.cdp.send('Input.dispatchKeyEvent', {
+          type,
+          key: key || undefined,
+          code: code || undefined,
+          text: text || undefined,
+          unmodifiedText: text || undefined,
+          modifiers: clampInt(modifiers, 0, 15, 0),
+        });
+        return { ok: true, dispatched: type };
+      }
+
+      if (MOUSE_TYPES.has(type)) {
+        const w = sc.lastMeta?.deviceWidth;
+        const h = sc.lastMeta?.deviceHeight;
+        if (!w || !h) return { ok: false, error: 'no frame geometry yet — wait for the first frame' };
+        const n = (v) => (Number.isFinite(Number(v)) ? Math.min(1, Math.max(0, Number(v))) : 0);
+        await sc.cdp.send('Input.dispatchMouseEvent', {
+          type,
+          x: Math.round(n(nx) * w),
+          y: Math.round(n(ny) * h),
+          button: button || (type === 'mouseMoved' ? 'none' : 'left'),
+          clickCount: type === 'mousePressed' || type === 'mouseReleased' ? clampInt(clickCount, 1, 3, 1) : 0,
+          deltaX: type === 'mouseWheel' ? Number(deltaX) || 0 : undefined,
+          deltaY: type === 'mouseWheel' ? Number(deltaY) || 0 : undefined,
+          modifiers: clampInt(modifiers, 0, 15, 0),
+        });
+        return { ok: true, dispatched: type };
+      }
+
+      return { ok: false, error: `unsupported input type: ${type}` };
+    } catch (e) {
+      return { ok: false, error: String(e?.message || e) };
+    }
   },
 
   async screencast_stop() {
@@ -1569,7 +1632,7 @@ const DAEMON_LOCAL_ACTIONS = new Set([
   'stop', 'totp', 'record_start', 'record_status', 'record_stop', 'replay', 'report',
   // Screencast owns a Playwright CDP session, so it must never be forwarded to the
   // companion extension the way page verbs are.
-  'screencast_start', 'screencast_status', 'screencast_stop',
+  'screencast_start', 'screencast_status', 'screencast_stop', 'screencast_input',
 ]);
 const EXT_LOCAL = Array.from(DAEMON_LOCAL_ACTIONS);
 
