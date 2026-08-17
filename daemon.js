@@ -139,7 +139,10 @@ const state = {
   cache: {}, // domain -> { "intent": {selector, role, name, hits, ts} }
   memoryDir: path.join(HOME_KES, 'memory'),
   // Live viewport: CDP screencast → SSE subscribers (see screencast_start).
-  screencast: null, // {cdp, page, frames, last, lastAt, subs:Set<res>, opts, heartbeat, startedAt}
+  screencast: null,
+  // Reusable raw-CDP session for the `cdp` verb (full-protocol escape hatch).
+  cdpSession: null,
+  cdpSessionPage: null, // {cdp, page, frames, last, lastAt, subs:Set<res>, opts, heartbeat, startedAt}
 };
 fs.mkdirSync(state.downloadDir, { recursive: true });
 fs.mkdirSync(state.recordsDir, { recursive: true });
@@ -1135,6 +1138,44 @@ const actions = {
     return { ok: true, path: out };
   },
 
+  // ---------- raw protocol (full digital senses) ----------
+  // The curated verbs (snapshot/click/type/…) cover the common senses. `cdp` is the
+  // escape hatch to the WHOLE Chrome DevTools Protocol — any of its ~57 domains and
+  // hundreds of methods, forwarded straight to Chrome the way chrome-agent does, so a
+  // capability we don't wrap (Network body inspection, Accessibility, Emulation, a
+  // domain newer than this build) is still one call away. The verify loop is yours to
+  // run around it — this is a primitive, not a guarded action.
+  //   cdp method="Network.enable"
+  //   cdp method="Runtime.evaluate" params='{"expression":"document.title","returnByValue":true}'
+  async cdp({ method, params } = {}) {
+    if (!state.page || !state.context?.newCDPSession)
+      return { ok: false, error: 'cdp needs a Playwright page (not available in native/extension mode)' };
+    if (!method || typeof method !== 'string' || !method.includes('.'))
+      return { ok: false, error: 'cdp needs method="Domain.method"' };
+    // One CDP session per page, reused across calls (enabling a domain persists on it).
+    // Rebound if the page navigated to a new target.
+    if (!state.cdpSession || state.cdpSessionPage !== state.page) {
+      try {
+        state.cdpSession = await state.context.newCDPSession(state.page);
+        state.cdpSessionPage = state.page;
+      } catch (e) {
+        return { ok: false, error: `could not open CDP session: ${String(e?.message || e)}` };
+      }
+    }
+    let p = params;
+    if (typeof params === 'string') {
+      try { p = params.trim() ? JSON.parse(params) : {}; }
+      catch { return { ok: false, error: 'cdp params must be valid JSON' }; }
+    }
+    try {
+      const result = await state.cdpSession.send(method, p || {});
+      return { ok: true, method, result };
+    } catch (e) {
+      // A CDP protocol error (bad method/params) comes back here — surface it plainly.
+      return { ok: false, method, error: String(e?.message || e) };
+    }
+  },
+
   // ---------- live viewport (screencast) ----------
   // `screenshot` gives you one frame; this gives you the window. CDP streams JPEG
   // frames as the page paints, and we fan them out to SSE subscribers on
@@ -1633,6 +1674,9 @@ const DAEMON_LOCAL_ACTIONS = new Set([
   // Screencast owns a Playwright CDP session, so it must never be forwarded to the
   // companion extension the way page verbs are.
   'screencast_start', 'screencast_status', 'screencast_stop', 'screencast_input',
+  // `cdp` drives the Playwright page directly (full protocol) — must never be
+  // forwarded to the companion extension.
+  'cdp',
 ]);
 const EXT_LOCAL = Array.from(DAEMON_LOCAL_ACTIONS);
 
