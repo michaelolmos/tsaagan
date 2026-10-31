@@ -20,6 +20,7 @@ import crypto from 'node:crypto';
 import { execFile } from 'node:child_process';
 import { nativeLaunch, makeNativeActions } from './native.js';
 import { totpCode } from './lib/totp.js';
+import { wakeFrozenTabs } from './lib/cdp-wake.js';
 import * as brain from './lib/brain.js';
 
 // The Playwright engine is loaded dynamically (below) so native mode can run
@@ -405,6 +406,9 @@ async function launch() {
   if (state.mode === 'clone' || state.mode === 'live') {
     // Connect over CDP to an already-running Chrome launched with
     // --remote-debugging-port=9222 (use mode=clone for a logged-in profile).
+    // A tab frozen by Memory Saver never answers and hangs the attach (Chrome 150+).
+    const wake = await wakeFrozenTabs(CDP).catch((e) => ({ error: String(e?.message || e) }));
+    if (wake.woken?.length) console.log(`[tsaagan] woke ${wake.woken.length} frozen tab(s) before attach`);
     state.browser = await chromium.connectOverCDP(CDP);
     state.context = state.browser.contexts()[0] || (await state.browser.newContext());
     const pages = state.context.pages();
