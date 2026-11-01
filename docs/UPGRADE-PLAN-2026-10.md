@@ -1,7 +1,7 @@
 # Tsaagan upgrade plan — October 2026
 
 **Written:** 2026-10-16 · **Work session:** Saturday 2026-10-17, morning
-**Tickets:** epic `omi-b7npf` in the OMI-dev beads database (`bd show omi-b7npf`)
+**Tickets:** tracked privately; numbered 1-11 below
 
 ## Why now
 
@@ -20,7 +20,7 @@ browser-only.
 | Evidence it works | 31 recorded uses, but only 3 journal runs and 3 brain episodes. Missions driven by Claude subagents write nothing, so there is no success rate. |
 | Reach | Chrome only. No Finder, file pickers, System Settings, Xcode, or other apps. One browser and one page at a time; parallel missions collide on `:9222`. |
 | Tests | 39 unit/smoke cases. Nothing drives a live Chrome, which is why the Chrome 150/151 breaks went unnoticed. |
-| Docs | Skill and agent docs point at `/Users/mo/...` (wrong user). About 8 verbs are undocumented (`fill_form`, `assert`, `cookies`, `pdf`, `record_*`, `doctor`, `mcp`, `network`, `replay`). The clone-mode section describes the broken path as the standard one. |
+| Docs | Skill and agent docs hardcode one user's home folder instead of `$HOME`. About 8 verbs are undocumented (`fill_form`, `assert`, `cookies`, `pdf`, `record_*`, `doctor`, `mcp`, `network`, `replay`). The clone-mode section describes the broken path as the standard one. |
 | Disk | `~/.tsaagan` is 2.9 GB, with 20+ leftover `profile-*` directories. |
 
 ## What the field does now (October 2026)
@@ -40,19 +40,19 @@ use with the same safety rails and log.
 
 ## Tasks (in order)
 
-| # | Bead | Task | Done when |
-|---|---|---|---|
-| 1 | `omi-b7npf.1` | Land `feature/screencast` on `main`; commit the 90s attach-timeout patch | `main` has both, pushed, smoke tests pass |
-| 2 | `omi-b7npf.8` | **Attach to the real logged-in Chrome without a second copy** (Chrome 150/151) | A logged-in GitHub page: snapshot, click, verify, with no second Chrome process |
-| 3 | `omi-b7npf.2` | Live-Chrome regression test, nightly launchd job with heartbeat | Seen red once, then green |
-| 4 | `omi-b7npf.3` | Log every mission automatically (goal, steps, ok, failure reason) | This week's missions show with a success rate |
-| 5 | `omi-b7npf.4` | Fix the docs (paths, verbs, auth section, private verbs, ROADMAP) | Copy-paste commands in the skill run as written |
-| 6 | `omi-b7npf.6` | Router: connector/API, then browser, then screen | A job with an API never opens a browser |
-| 7 | `omi-b7npf.9` | Spike: desktop apps via Claude Code computer use (adopt, not build) | Written verdict plus one working handoff |
-| 8 | `omi-b7npf.10` | Safety rails: approval tiers, hard blocks, activity log, stop | Each rail seen firing on a test mission |
-| 9 | `omi-b7npf.7` | Background and parallel missions (own window/profile each) | Two missions run at once while Mike works |
-| 10 | `omi-b7npf.5` | Prune `~/.tsaagan` leftovers; auto-clean temp profiles | Under 0.5 GB, stays there |
-| 11 | `omi-b7npf.11` | Retire the duplicate BrowserPilot tool into Tsaagan | One browser tool in OMI |
+| # | Task | Done when |
+|---|---|---|
+| 1 | Land `feature/screencast` on `main`; commit the 90s attach-timeout patch | `main` has both, pushed, smoke tests pass |
+| 2 | **Attach to the real logged-in Chrome without a second copy** (Chrome 150/151) | A logged-in GitHub page: snapshot, click, verify, with no second Chrome process |
+| 3 | Live-Chrome regression test, nightly launchd job with heartbeat | Seen red once, then green |
+| 4 | Log every mission automatically (goal, steps, ok, failure reason) | This week's missions show with a success rate |
+| 5 | Fix the docs (paths, verbs, auth section, private verbs, ROADMAP) | Copy-paste commands in the skill run as written |
+| 6 | Router: connector/API, then browser, then screen | A job with an API never opens a browser |
+| 7 | Spike: desktop apps via Claude Code computer use (adopt, not build) | Written verdict plus one working handoff |
+| 8 | Safety rails: approval tiers, hard blocks, activity log, stop | Each rail seen firing on a test mission |
+| 9 | Background and parallel missions (own window/profile each) | Two missions run at once while Mike works |
+| 10 | Prune `~/.tsaagan` leftovers; auto-clean temp profiles | Under 0.5 GB, stays there |
+| 11 | Retire the duplicate BrowserPilot tool into Tsaagan | One browser tool in OMI |
 
 Saturday's realistic scope is tasks 1 to 5: the foundation. Everything after
 that sits on a tool that can attach to Chrome.
